@@ -1,7 +1,12 @@
 #include "../include/command.h"
-#include "../include/io.h"
-#include "../include/Mystring.h"
+#include "../include/FileInput.h"
+#include "../include/types.h"
 
 int main() {
-    assembly("../../cm.txt", "asm.txt");
+    char AsmName[100] =  {};
+    
+    printf("Enter full path to assembler file\n");
+    scanf("%s", AsmName);
+    
+    assembly("../../cm.txt", AsmName);
 }

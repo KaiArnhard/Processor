@@ -243,7 +243,6 @@ size_t StackVerify(stack_t* stk) {
         
     #endif // HASH_PROT
     
-    MyErrorno |= STACK_ERROR_STACK_OVERFLOW;
     return MyErrorno;
 }
 

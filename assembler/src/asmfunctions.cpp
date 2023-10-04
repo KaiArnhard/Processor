@@ -1,6 +1,6 @@
 #include <cstdio>
 #include "../include/command.h"
-#include "../include/io.h"
+#include "../include/FileInput.h"
 #include <cstring>
 
 int assembly(const char* fname1, const char* fname2) {

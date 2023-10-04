@@ -45,10 +45,28 @@ int mul(stack_t* stk) {
     return tmp1 * tmp2;
 }
 
-int my_sqrt(stack_t* stk) {
+int proc_sqrt(stack_t* stk) {
     elem_t tmp = 0;
     StackPop(stk, &tmp);
     double tmp1 = sqrt(tmp * SIGNS);
+    tmp = tmp1;
+    StackPush(stk, tmp);
+    return tmp;
+}
+
+int proc_sin(stack_t* stk) {
+    elem_t tmp = 0;
+    StackPop(stk, &tmp);
+    double tmp1 = sin(tmp / SIGNS) * SIGNS;
+    tmp = tmp1;
+    StackPush(stk, tmp);
+    return tmp;
+}
+
+int proc_cos(stack_t* stk) {
+    elem_t tmp = 0;
+    StackPop(stk, &tmp);
+    double tmp1 = cos(tmp / SIGNS) * SIGNS;
     tmp = tmp1;
     StackPush(stk, tmp);
     return tmp;
@@ -84,7 +102,11 @@ int VirtualMachine(FILE* PtrToCm, stack_t* stk) {
 
 void ProcComparator(FILE* PtrToCm, const int command, stack_t* stk) {
     int tmp = 0;
+    int poped = 0;
     switch (command) {
+    case HLT:
+        exit(0);
+        break;
     case STACK_PUSH:
         fscanf(PtrToCm, "%d", &tmp);
         tmp *= SIGNS;
@@ -94,6 +116,9 @@ void ProcComparator(FILE* PtrToCm, const int command, stack_t* stk) {
         scanf("%d", &tmp);
         tmp *= SIGNS;
         StackPush(stk, tmp);
+        break;
+    case STACK_POP:
+        StackPop(stk, &poped);
         break;
     case ADD:
         add(stk);
@@ -107,11 +132,17 @@ void ProcComparator(FILE* PtrToCm, const int command, stack_t* stk) {
     case MUL:
         mul(stk);
         break;
+    case SQRT:
+        proc_sqrt(stk);
+        break;
+    case SIN:
+        proc_sin(stk);
+        break;
+    case COS:
+        proc_cos(stk);
+        break;
     case OUT:
         out(stk);
-        break;
-    case HLT:
-        exit(0);
         break;
     default:
         abort();
