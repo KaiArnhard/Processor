@@ -1,5 +1,5 @@
-#include "../include/proc.h"
-#include "../../assembler/include/command.h"
+#include "proc.h"
+#include "command.h"
 
 int add(stack_t *stk) {
     elem_t tmp1 = 0;

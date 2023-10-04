@@ -1,6 +1,7 @@
-#include "../include/types.h"
-#include <cstring>
+#include "../include/command.h"
 #include "../include/FileInput.h"
+#include <cstring>
+
 
 char *InputBuffer (const char *FileName, Lengths *Length)
 {

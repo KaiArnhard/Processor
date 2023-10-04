@@ -1,4 +1,4 @@
-#include "../include/proc.h"
+#include "proc.h"
 
 int main() {
     stack_t stk;

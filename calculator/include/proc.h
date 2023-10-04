@@ -2,7 +2,7 @@
 #define PROC_H
 
 #include "stack.h"
-#include "cmath"
+#include <cmath>
 
 int add(stack_t* stk);
 int sub(stack_t* stk);
