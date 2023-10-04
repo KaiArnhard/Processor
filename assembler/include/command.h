@@ -3,15 +3,15 @@
 
 enum Commands {
     STACK_PUSH =  0,
-    STACK_POP  =  1,
-    STACK_IN   =  2,
-    ADD        =  3,
-    SUB        =  4,
-    DIV        =  5,
-    MUL        =  6,
-    SQRT       =  7,
-    SIN        =  8,
-    COS        =  9,
+    STACK_IN   =  1,
+    ADD        =  2,
+    SUB        =  3,
+    DIV        =  4,
+    MUL        =  5,
+    SQRT       =  6,
+    SIN        =  7,
+    COS        =  8,
+    OUT        =  9, 
     HLT        = -1
 };
 

@@ -3,5 +3,5 @@
 #include "../include/Mystring.h"
 
 int main() {
-    assembly("cm.txt", "asm.txt");
+    assembly("../../cm.txt", "asm.txt");
 }

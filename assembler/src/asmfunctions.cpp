@@ -21,18 +21,15 @@ int assembly(const char* fname1, const char* fname2) {
 void comparator(String* PtrToStrs, size_t NumbOfLines, FILE* PtrToCm) {
     char buff[100] = {};
     int value = __INT_MAX__;
+    fprintf(PtrToCm, "%d\n", NumbOfLines);
     for (size_t counter = 0; counter < NumbOfLines; counter++) {
         sscanf(PtrToStrs[counter].ptrtostr, "%s", buff);
         if (!strcmp(buff, "PUSH")) {
             fprintf(PtrToCm, "%d ", STACK_PUSH);
-            sscanf(PtrToStrs[counter].ptrtostr + 4, "%d", &value);
+            sscanf(PtrToStrs[counter].ptrtostr + strlen("PUSH"), "%d", &value);
             fprintf(PtrToCm, "%d\n", value);
-        } else if (!strcmp(buff, "POP")) {
-            fprintf(PtrToCm, "%d ", STACK_POP);
         } else if (!strcmp(buff, "IN")) {
-            fprintf(PtrToCm, "%d", STACK_IN);
-            scanf("%d", buff);
-            fprintf(PtrToCm, "%d\n", buff);
+            fprintf(PtrToCm, "%d\n", STACK_IN);
         } else if (!strcmp(buff, "ADD")) {
             fprintf(PtrToCm, "%d\n", ADD);
         } else if (!strcmp(buff, "SUB")) {
@@ -47,6 +44,8 @@ void comparator(String* PtrToStrs, size_t NumbOfLines, FILE* PtrToCm) {
             fprintf(PtrToCm, "%d\n", SIN);
         } else if (!strcmp(buff, "COS")) {
             fprintf(PtrToCm, "%d\n", COS);
+        } else if (!strcmp(buff, "OUT")) {
+            fprintf(PtrToCm, "%d\n", OUT);
         } else if (!strcmp(buff, "HLT")) {
             fprintf(PtrToCm, "%d", HLT);
         }

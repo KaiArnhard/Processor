@@ -1,4 +1,4 @@
-#include "../../Stack/include/stack.h"
+#include "../include/stack.h"
 #include <assert.h>
 
 void StackCtor (stack_t* stk, size_t capacity, const char* name, const size_t line, const char* file, const char* function) {
