@@ -16,6 +16,4 @@ enum Commands {
     OUT        =  10 
 };
 
-int assembly(const char* fname1, const char* fname2);
-
 #endif // COMMAND_H

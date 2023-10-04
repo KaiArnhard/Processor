@@ -9,4 +9,5 @@ int main() {
     scanf("%s", AsmName);
     
     assembly("../../cm.txt", AsmName);
+    disassembly("disasm.txt", "../../cm.txt");
 }

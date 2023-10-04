@@ -15,12 +15,14 @@ int assembly(const char* fname1, const char* fname2) {
     comparator(PtrToStr, length.NumberOfLines, PtrToCm);
     
     free(PtrToStr);   
+    fclose(PtrToCm);
     return 0;
 }
 
 void comparator(String* PtrToStrs, size_t NumbOfLines, FILE* PtrToCm) {
     char buff[100] = {};
     int value = __INT_MAX__;
+
     fprintf(PtrToCm, "%d\n", NumbOfLines);
     for (size_t counter = 0; counter < NumbOfLines; counter++) {
         sscanf(PtrToStrs[counter].ptrtostr, "%s", buff);
@@ -52,6 +54,64 @@ void comparator(String* PtrToStrs, size_t NumbOfLines, FILE* PtrToCm) {
     }
 }
 
-int disassembly(String* PtrToStrs, size_t NumbOfLines, FILE* PtrToCm) {
+int disassembly(char* DisAsmName, char* CmName) {
+    FILE* PtrToAsm = fopen(DisAsmName, "w");
+    FILE* PtrToCm  = fopen(CmName,     "r");
+    
+    int command = __INT_MAX__;
+    int tmp = __INT_MAX__;
+    size_t NumbOfLines = 0;
+    
+    fscanf(PtrToCm, "%d", &NumbOfLines);
+    
+    for (size_t counter = 0; counter < NumbOfLines; counter++) {
+        fscanf(PtrToCm, "%d", &command);    
+        switch (command) {
+        case HLT:
+            fprintf(PtrToAsm, "HLT\n");
+            break;
+        case STACK_PUSH:
+            fprintf(PtrToAsm, "PUSH ");
+            fscanf(PtrToCm, "%d", &tmp);
+            fprintf(PtrToAsm, "%d\n", tmp);
+            break;
+        case STACK_IN:
+            fprintf(PtrToAsm, "IN\n");
+            break;
+        case STACK_POP:
+            fprintf(PtrToAsm, "POP\n");
+            break;
+        case ADD:
+            fprintf(PtrToAsm, "ADD\n");
+            break;
+        case SUB:
+            fprintf(PtrToAsm, "SUB\n");
+            break;
+        case DIV:
+            fprintf(PtrToAsm, "DIV\n");
+            break;
+        case MUL:
+            fprintf(PtrToAsm, "MUL\n");
+            break;
+        case SQRT:
+            fprintf(PtrToAsm, "SQRT\n");
+            break;
+        case SIN:
+            fprintf(PtrToAsm, "SIN\n");
+            break;
+        case COS:
+            fprintf(PtrToAsm, "COS\n");
+            break;
+        case OUT:
+            fprintf(PtrToAsm, "OUT\n");
+            break;
+        default:
+            abort();
+        break;
+        }    
+    }
 
+    fclose(PtrToAsm);
+    fclose(PtrToCm);
+    return 0;
 }

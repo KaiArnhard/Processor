@@ -17,5 +17,6 @@ enum Commands {
 };
 
 int assembly(const char* fname1, const char* fname2);
+int disassembly(char* DisAsmName, char* CmName);
 
 #endif // COMMAND_H
