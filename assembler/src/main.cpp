@@ -1,6 +1,6 @@
-#include "../include/command.h"
-#include "../include/FileInput.h"
-#include "../include/types.h"
+#include "command.h"
+#include "FileInput.h"
+#include "types.h"
 
 int main() {
     char AsmName[100] =  {};

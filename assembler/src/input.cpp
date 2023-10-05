@@ -1,5 +1,5 @@
-#include "../include/command.h"
-#include "../include/FileInput.h"
+#include "command.h"
+#include "FileInput.h"
 #include <cstring>
 
 

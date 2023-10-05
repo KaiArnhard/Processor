@@ -1,6 +1,6 @@
 #include <cstdio>
-#include "../include/command.h"
-#include "../include/FileInput.h"
+#include "command.h"
+#include "FileInput.h"
 #include <cstring>
 
 int assembly(const char* fname1, const char* fname2) {
@@ -44,11 +44,17 @@ void comparator(String* PtrToStrs, size_t NumbOfLines, FILE* PtrToCm) {
         else COMMAND_COMPARE("POP", buff, STACK_POP)
         else COMMAND_COMPARE("ADD", buff, ADD)
         else COMMAND_COMPARE("SUB", buff, SUB)
+        else COMMAND_COMPARE("DIV", buff, DIV)
         else COMMAND_COMPARE("SQRT", buff, SQRT)
         else COMMAND_COMPARE("SIN", buff, SIN)
         else COMMAND_COMPARE("COS", buff, COS)
         else COMMAND_COMPARE("OUT", buff, OUT)
         else COMMAND_COMPARE("HLT", buff, HLT)
+        else {
+            printf("\033[0;31m");
+            printf("Syntax Error\n");
+            printf("Entered command is %s\n", buff);
+        }
     }
 }
 
@@ -111,5 +117,6 @@ int disassembly(char* DisAsmName, char* CmName) {
 
     fclose(PtrToAsm);
     fclose(PtrToCm);
+
     return 0;
 }

@@ -29,9 +29,9 @@ int div(stack_t* stk) {
 
     StackPop(stk, &divider);
     StackPop(stk, &divisible);
-    StackPush(stk, divisible * SIGNS / divider);
+    StackPush(stk, ((divisible * SIGNS) / divider));
 
-    return divisible / divider;
+    return (divisible * SIGNS) / divider;
 }
 
 int mul(stack_t* stk) {
@@ -75,6 +75,7 @@ int proc_cos(stack_t* stk) {
 int in(stack_t *stk) {
     elem_t tmp = 0;
     scanf("%d", &tmp);
+    return tmp;
 }
 
 int out(stack_t* stk) {
@@ -84,7 +85,7 @@ int out(stack_t* stk) {
     printf("\033[0;31m");
     printf("%d\n", tmp);
     
-    return 0;
+    return tmp;
 }
 
 int VirtualMachine(FILE* PtrToCm, stack_t* stk) {
@@ -96,11 +97,13 @@ int VirtualMachine(FILE* PtrToCm, stack_t* stk) {
     for (size_t counter = 0; counter < NumbOfLines; counter++) {
         fscanf(PtrToCm, "%d", &command);
         ProcComparator(PtrToCm, command, stk);
+        STACK_DUMP(stk);
     }  
     return 0;
 }
 
 void ProcComparator(FILE* PtrToCm, const int command, stack_t* stk) {
+    
     int tmp = 0;
     int poped = 0;
     switch (command) {
