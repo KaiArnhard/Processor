@@ -1,9 +1,0 @@
-IN
-IN
-DIV
-IN
-IN
-DIV
-SUB
-OUT
-HLT
