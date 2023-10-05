@@ -2,8 +2,7 @@
 #define FILE_INPUT_H
 
 #include "types.h"
-
-#define COMMAND_COMPARE()
+                                                      
 
 char   *InputBuffer(const char *FileName, Lengths *Length);
 void InputPtrToBuffer(String *PtrToLine, Lengths *Length, char *Buffer);

@@ -20,37 +20,35 @@ int assembly(const char* fname1, const char* fname2) {
 }
 
 void comparator(String* PtrToStrs, size_t NumbOfLines, FILE* PtrToCm) {
+    
+    #define COMMAND_COMPARE(command, buffer, command_number)  \
+    if (!strcmp(buffer, command)) {                           \
+        fprintf(PtrToCm, "%d ", command_number);              \
+        if (value != __INT_MAX__) {                           \
+            fprintf(PtrToCm, "%d\n", value);                  \
+        } else {                                              \
+            fprintf(PtrToCm, "\n");                           \
+        }                                                     \
+    }           
+
     char buff[100] = {};
-    int value = __INT_MAX__;
 
     fprintf(PtrToCm, "%d\n", NumbOfLines);
     for (size_t counter = 0; counter < NumbOfLines; counter++) {
-        sscanf(PtrToStrs[counter].ptrtostr, "%s", buff);
-        if (!strcmp(buff, "PUSH")) {
-            fprintf(PtrToCm, "%d ", STACK_PUSH);
-            sscanf(PtrToStrs[counter].ptrtostr + strlen("PUSH"), "%d", &value);
-            fprintf(PtrToCm, "%d\n", value);
-        } else if (!strcmp(buff, "IN")) {
-            fprintf(PtrToCm, "%d\n", STACK_IN);
-        } else if (!strcmp(buff, "ADD")) {
-            fprintf(PtrToCm, "%d\n", ADD);
-        } else if (!strcmp(buff, "SUB")) {
-            fprintf(PtrToCm, "%d\n", SUB);
-        } else if (!strcmp(buff, "DIV")) {
-            fprintf(PtrToCm, "%d\n", DIV);
-        } else if (!strcmp(buff, "MUL")) {
-            fprintf(PtrToCm, "%d\n", MUL);
-        } else if (!strcmp(buff, "SQRT")) {
-            fprintf(PtrToCm, "%d\n", SQRT);
-        } else if (!strcmp(buff, "SIN")) {
-            fprintf(PtrToCm, "%d\n", SIN);
-        } else if (!strcmp(buff, "COS")) {
-            fprintf(PtrToCm, "%d\n", COS);
-        } else if (!strcmp(buff, "OUT")) {
-            fprintf(PtrToCm, "%d\n", OUT);
-        } else if (!strcmp(buff, "HLT")) {
-            fprintf(PtrToCm, "%d", HLT);
-        }
+        int value = __INT_MAX__;
+        sscanf(PtrToStrs[counter].ptrtostr, "%s%d", buff, &value);
+        
+        #include "command_compare.h"
+        
+        else COMMAND_COMPARE("IN", buff, STACK_IN)
+        else COMMAND_COMPARE("POP", buff, STACK_POP)
+        else COMMAND_COMPARE("ADD", buff, ADD)
+        else COMMAND_COMPARE("SUB", buff, SUB)
+        else COMMAND_COMPARE("SQRT", buff, SQRT)
+        else COMMAND_COMPARE("SIN", buff, SIN)
+        else COMMAND_COMPARE("COS", buff, COS)
+        else COMMAND_COMPARE("OUT", buff, OUT)
+        else COMMAND_COMPARE("HLT", buff, HLT)
     }
 }
 
@@ -63,7 +61,7 @@ int disassembly(char* DisAsmName, char* CmName) {
     size_t NumbOfLines = 0;
     
     fscanf(PtrToCm, "%d", &NumbOfLines);
-    
+
     for (size_t counter = 0; counter < NumbOfLines; counter++) {
         fscanf(PtrToCm, "%d", &command);    
         switch (command) {

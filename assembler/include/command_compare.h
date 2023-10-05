@@ -1,0 +1,3 @@
+
+
+COMMAND_COMPARE("PUSH", buff, STACK_PUSH)
