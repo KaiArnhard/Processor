@@ -1,7 +1,7 @@
 #if !defined(COMMAND_H)
 #define COMMAND_H
 
-enum Commands {
+enum command_t {
     HLT        = -1,
     STACK_PUSH =  0,
     STACK_IN   =  1,

@@ -16,12 +16,15 @@ char *InputBuffer (const char *FileName, Lengths *Length)
     assert(fp != 0);
     assert(fread(Buffer, sizeof(char), statistic.st_size, fp) != 0);
     fclose(fp);
+    
+    for (size_t counter = 0; counter < Length->LengthOfBuffer; counter++) {
+        Buffer[counter] = toupper(Buffer[counter]);
+    }
+    
 
     Length->NumberOfLines++;
-    for (int counter = 0; (counter + 1) < Length->LengthOfBuffer; counter++)
-    {
-        if (Buffer[counter] == '\n')
-        {
+    for (int counter = 0; (counter + 1) < Length->LengthOfBuffer; counter++) {
+        if (Buffer[counter] == '\n') {
             Buffer[counter] = '\0';
             Length->NumberOfLines++;
         }

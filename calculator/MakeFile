@@ -1,0 +1,15 @@
+CC = g++
+CFLAGS = -I include
+CFLAGS1 = -I include -c
+all: proc
+
+proc: main.o StackFunctions.o ProcFunctions.o
+	$(CC) $(CFLAGS) obj/main.o obj/ProcFunctions.o obj/StackFunctions.o -o proc
+main.o: src/main.cpp 
+	$(CC) $(CFLAGS1) src/main.cpp -o obj/main.o
+ProcFunctions.o: src/ProcFunctions.cpp
+	$(CC) $(CFLAGS1) src/ProcFunctions.cpp -o obj/ProcFunctions.o
+StackFunctions.o: src/StackFunctions.cpp
+	$(CC) $(CFLAGS1) src/StackFunctions.cpp -o obj/StackFunctions.o
+clean:
+	rm -rf *.o proc

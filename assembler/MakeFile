@@ -1,0 +1,15 @@
+CC = g++
+CFLAGS = -I include
+CFLAGS1 = -I include -c -D __CRT_SECURE_NO_WARNINGS__
+all: asm
+
+asm: main.o AsmFunctions.o input.o
+	$(CC) $(CFLAGS) obj/main.o obj/AsmFunctions.o obj/input.o -o asm
+main.o: src/main.cpp 
+	$(CC) $(CFLAGS1) src/main.cpp -o obj/main.o
+AsmFunctions.o: src/AsmFunctions.cpp
+	$(CC) $(CFLAGS1) src/AsmFunctions.cpp -o obj/AsmFunctions.o
+input.o: src/input.cpp
+	$(CC) $(CFLAGS1) src/input.cpp -o obj/input.o
+clean:
+	rm -rf *.o proc

@@ -1,40 +1,39 @@
 #include "proc.h"
-#include "command.h"
 
-int add(stack_t *stk) {
+elem_t add(stack_t *stk) {
     elem_t tmp1 = 0;
     elem_t tmp2 = 0;
 
     StackPop(stk, &tmp1);
     StackPop(stk, &tmp2);
-    StackPush(stk, tmp1 + tmp2);
+    StackPush(stk, (tmp1 + tmp2) * SIGNS);
 
-    return tmp1 + tmp2;
+    return (tmp1 + tmp2) * SIGNS;
 }
 
-int sub(stack_t* stk) {
+elem_t sub(stack_t* stk) {
     elem_t deduct =  0;
     elem_t redused = 0;
 
     StackPop(stk, &deduct);
     StackPop(stk, &redused);
-    StackPush(stk, redused - deduct);
+    StackPush(stk, (redused - deduct) * SIGNS);
 
-    return redused - deduct;
+    return (redused - deduct) * SIGNS;
 }
 
-int div(stack_t* stk) {
+elem_t div(stack_t* stk) {
     elem_t divider   = 0;
     elem_t divisible = 0;
 
     StackPop(stk, &divider);
     StackPop(stk, &divisible);
-    StackPush(stk, ((divisible * SIGNS) / divider));
+    StackPush(stk, (divisible * SIGNS / divider));
 
     return (divisible * SIGNS) / divider;
 }
 
-int mul(stack_t* stk) {
+elem_t mul(stack_t* stk) {
     elem_t tmp1 = 0;
     elem_t tmp2 = 0;
 
@@ -45,7 +44,7 @@ int mul(stack_t* stk) {
     return tmp1 * tmp2;
 }
 
-int proc_sqrt(stack_t* stk) {
+elem_t proc_sqrt(stack_t* stk) {
     elem_t tmp = 0;
     StackPop(stk, &tmp);
     double tmp1 = sqrt(tmp * SIGNS);
@@ -54,7 +53,7 @@ int proc_sqrt(stack_t* stk) {
     return tmp;
 }
 
-int proc_sin(stack_t* stk) {
+elem_t proc_sin(stack_t* stk) {
     elem_t tmp = 0;
     StackPop(stk, &tmp);
     double tmp1 = sin(tmp / SIGNS) * SIGNS;
@@ -63,7 +62,7 @@ int proc_sin(stack_t* stk) {
     return tmp;
 }
 
-int proc_cos(stack_t* stk) {
+elem_t proc_cos(stack_t* stk) {
     elem_t tmp = 0;
     StackPop(stk, &tmp);
     double tmp1 = cos(tmp / SIGNS) * SIGNS;
@@ -72,13 +71,13 @@ int proc_cos(stack_t* stk) {
     return tmp;
 }
 
-int in(stack_t *stk) {
+elem_t in(stack_t *stk) {
     elem_t tmp = 0;
     scanf("%d", &tmp);
     return tmp;
 }
 
-int out(stack_t* stk) {
+elem_t out(stack_t* stk) {
     elem_t tmp = 0;
     StackPop(stk, &tmp);
     
@@ -90,7 +89,7 @@ int out(stack_t* stk) {
 
 int VirtualMachine(FILE* PtrToCm, stack_t* stk) {
     int NumbOfLines = 0;
-    int command = 0;
+    command_t command;
 
     fscanf(PtrToCm, "%d", &NumbOfLines);
 
@@ -102,10 +101,12 @@ int VirtualMachine(FILE* PtrToCm, stack_t* stk) {
     return 0;
 }
 
-void ProcComparator(FILE* PtrToCm, const int command, stack_t* stk) {
+void ProcComparator(FILE* PtrToCm, const command_t command, stack_t* stk) {
     
     int tmp = 0;
     int poped = 0;
+    char symbol = 0;
+
     switch (command) {
     case HLT:
         exit(0);
@@ -116,7 +117,11 @@ void ProcComparator(FILE* PtrToCm, const int command, stack_t* stk) {
         StackPush(stk, tmp);
         break;
     case STACK_IN:
-        scanf("%d", &tmp);
+        printf("Enter number from keyboard\n");
+        while (scanf("%d", &tmp) != 1) {
+            printf("You entered not a number, try again\n");
+            while ((symbol = getchar()) != EOF && symbol != '\n') { }
+        }
         tmp *= SIGNS;
         StackPush(stk, tmp);
         break;
