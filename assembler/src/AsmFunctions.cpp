@@ -3,62 +3,124 @@
 #include "FileInput.h"
 #include <cstring>
 
+#define COMMAND_COMPARE(StrCommand, buffer, command_number)                                                            \
+    if (!strcmp(buffer, StrCommand)) {                                                                                 \
+        command[NumbOfComs] = command_number;                                                                          \
+        NumbOfComs++;                                                                                                  \
+        if (value != __INT_MAX__) {                                                                                    \
+            command[NumbOfComs - 1] += immed;                                                                          \
+            command[NumbOfComs] = value;                                                                               \
+            NumbOfComs++;                                                                                              \
+        } else if ((dbg = sscanf(PtrToStr[counter].ptrtostr + strlen(StrCommand), "%s", reg)) != 0 && dbg != EOF) {    \
+            if (reg[0] != 'R' || reg[2] != 'X' || (reg[1] - 'A') > 3) {                                                \
+                command[NumbOfComs - 1] = REG_ERR;                                                                     \
+            } else {                                                                                                   \
+                command[NumbOfComs - 1] += regis;                                                                      \
+                command[NumbOfComs] = reg[1] - 'A';                                                                    \
+                NumbOfComs++;                                                                                          \
+            }                                                                                                          \
+        }                                                                                                              \
+    }           
+
 int assembly(const char* fname1, const char* fname2) {
-    FILE* PtrToCm = fopen(fname1, "w");
+    FILE* fp = fopen(fname1, "w");
+    assert(fp != nullptr);
     String* PtrToStr = nullptr;
     Lengths length = {};
+
     char* buffer = InputBuffer(fname2, &length);
     
     PtrToStr = (String*) calloc(length.NumberOfLines, sizeof(String));
     
     InputPtrToBuffer(PtrToStr, &length, buffer);
-    comparator(PtrToStr, length.NumberOfLines, PtrToCm);
     
-    free(PtrToStr);   
-    fclose(PtrToCm);
+    #if defined(LINUX)
+        key_t key = ftok(PathToCm, proj_id);
+        size_t size = (4 + length.NumberOfCommands) * sizeof(int);
+        int shm_id = shmget(key, size, 0666 | IPC_CREAT |IPC_EXCL);
+        if (shm_id == -1) {
+            shm_id = shmget(key, size, 0666);
+        }
+        int* command = (int*) shmat(shm_id, nullptr, 0);
+    #else
+        int* command = (int*) calloc(length.NumberOfCommands, sizeof(int));
+    #endif // LINUX
+
+    comparator(PtrToStr, length.NumberOfLines, fp, command);
+    
+    free(PtrToStr);
+    //fclose(fp);
+    
     return 0;
 }
 
-void comparator(String* PtrToStrs, size_t NumbOfLines, FILE* PtrToCm) {
-    
-    #define COMMAND_COMPARE(command, buffer, command_number)  \
-    if (!strcmp(buffer, command)) {                           \
-        fprintf(PtrToCm, "%d ", command_number);              \
-        if (value != __INT_MAX__) {                           \
-            fprintf(PtrToCm, "%d\n", value);                  \
-        } else {                                              \
-            fprintf(PtrToCm, "\n");                           \
-        }                                                     \
-    }           
+void comparator(String* PtrToStr, size_t NumbOfLines, FILE* PtrToCm, int* command) {
+    char buff[20] = {};
+    char reg[4] = {};
+    size_t NumbOfComs = 3;
+    int dbg = 0;
 
-    char buff[100] = {};
+    for (size_t counter = 0; counter < sizeof(int); counter++) {
+        ((char*)command)[counter] = *((char*) &signature + counter);
+    }
+    command[1] = version;
 
-    fprintf(PtrToCm, "%d\n", NumbOfLines);
     for (size_t counter = 0; counter < NumbOfLines; counter++) {
         int value = __INT_MAX__;
-        sscanf(PtrToStrs[counter].ptrtostr, "%s%d", buff, &value);
-        
+        sscanf(PtrToStr[counter].ptrtostr, "%s%d", buff, &value);
+
         #include "command_compare.h"
-        
-        else COMMAND_COMPARE("IN", buff, STACK_IN)
-        else COMMAND_COMPARE("POP", buff, STACK_POP)
-        else COMMAND_COMPARE("ADD", buff, ADD)
-        else COMMAND_COMPARE("SUB", buff, SUB)
-        else COMMAND_COMPARE("DIV", buff, DIV)
+        else COMMAND_COMPARE("IN",   buff, STACK_IN)
+        else COMMAND_COMPARE("POP",  buff, STACK_POP)
+        else COMMAND_COMPARE("ADD",  buff, ADD)
+        else COMMAND_COMPARE("SUB",  buff, SUB)
+        else COMMAND_COMPARE("DIV",  buff, DIV)
         else COMMAND_COMPARE("SQRT", buff, SQRT)
-        else COMMAND_COMPARE("SIN", buff, SIN)
-        else COMMAND_COMPARE("COS", buff, COS)
-        else COMMAND_COMPARE("OUT", buff, OUT)
-        else COMMAND_COMPARE("HLT", buff, HLT)
+        else COMMAND_COMPARE("SIN",  buff, SIN)
+        else COMMAND_COMPARE("COS",  buff, COS)
+        else COMMAND_COMPARE("OUT",  buff, OUT)
+        else COMMAND_COMPARE("HLT",  buff, HLT)
         else {
-            printf("\033[0;31m");
+            printf(RED);
             printf("Syntax Error\n");
             printf("Entered command is %s\n", buff);
+            #if defined(LINUX)
+                shmdt(command);
+            #endif // LINUX
+            abort();
+        } 
+
+        if (command[NumbOfComs - 1] == REG_ERR) {
+            printf(RED);
+            printf("You entered wrong register, it is %s\n", reg);
+            #if defined(LINUX)
+                shmdt(command);
+            #endif // LINUX
+            abort();
         }
     }
+    command[2] = NumbOfComs - 3;
+
+    fwrite(command, sizeof(int), NumbOfComs, PtrToCm);
+    fclose(PtrToCm);
+    
+    FILE* fp = fopen(PathToCm1, "r");
+    int cm[NumbOfComs];
+    fread(cm, sizeof(int), NumbOfComs, fp);
+    fclose(fp);
+    for (size_t i = 0; i < NumbOfComs; i++) {
+        printf("%d\t", cm[i]);
+    }
+    
+
+    #if defined(LINUX)
+        shmdt(command);
+    #else
+        free(command);
+    #endif // LINUX
 }
 
-int disassembly(char* DisAsmName, char* CmName) {
+int disassembly(const char* DisAsmName, const char* CmName) {
     FILE* PtrToAsm = fopen(DisAsmName, "w");
     FILE* PtrToCm  = fopen(CmName,     "r");
     

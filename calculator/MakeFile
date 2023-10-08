@@ -1,9 +1,10 @@
 CC = g++
-CFLAGS = -I include
-CFLAGS1 = -I include -c
+OPERATION_SYSTEM = LINUX
+CFLAGS = -I  ../include -D LINUX
+CFLAGS1 = -I ../include -D LINUX -c
 all: proc
 
-proc: main.o StackFunctions.o ProcFunctions.o
+proc: main.o ProcFunctions.o StackFunctions.o
 	$(CC) $(CFLAGS) obj/main.o obj/ProcFunctions.o obj/StackFunctions.o -o proc
 main.o: src/main.cpp 
 	$(CC) $(CFLAGS1) src/main.cpp -o obj/main.o

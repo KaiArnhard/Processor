@@ -20,10 +20,14 @@ char *InputBuffer (const char *FileName, Lengths *Length)
     for (size_t counter = 0; counter < Length->LengthOfBuffer; counter++) {
         Buffer[counter] = toupper(Buffer[counter]);
     }
-    
+
+    char* tmp = strchr(Buffer, ';');
+    if (tmp) {
+        *tmp = '\0';
+    }
 
     Length->NumberOfLines++;
-    for (int counter = 0; (counter + 1) < Length->LengthOfBuffer; counter++) {
+    for (size_t counter = 0; (counter + 1) < Length->LengthOfBuffer; counter++) {
         if (Buffer[counter] == '\n') {
             Buffer[counter] = '\0';
             Length->NumberOfLines++;
@@ -34,8 +38,8 @@ char *InputBuffer (const char *FileName, Lengths *Length)
 
 void InputPtrToBuffer (String *PtrToLine, Lengths *Length, char *Buffer)
 {
-    int counter  = 0;
-    int counter1 = 0;
+    size_t counter  = 0;
+    size_t counter1 = 0;
 
     for (; counter < Length->LengthOfBuffer && counter1 < Length->NumberOfLines; counter++)
     {
@@ -47,9 +51,13 @@ void InputPtrToBuffer (String *PtrToLine, Lengths *Length, char *Buffer)
             }
             (PtrToLine + counter1)->ptrtostr = Buffer + counter;
             (PtrToLine + counter1)->lengthofstr = strlen(PtrToLine[counter1].ptrtostr);
+            if ((PtrToLine + counter1)->lengthofstr > 5) {
+                Length->NumberOfCommands += 2;
+            } else {
+                Length->NumberOfCommands++;
+            }
             counter1++;
         }
     }
     Length->NumberOfLines = counter1;
 }
-

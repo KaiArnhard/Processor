@@ -151,7 +151,7 @@ size_t StackResize(stack_t* stk, Resize_t CodeOfResize) {
     return OldCapacity;
 }
 
-void StackDump(stack_t* stk, const char* file, const char* function, size_t line) {
+FILE* StackDump(stack_t* stk, const char* file, const char* function, size_t line) {
     
     fprintf(PointerToDump, "Stack [%p], %s  from %s line: %d %s \n\n", stk, stk->var.name, stk->var.file, stk->var.line, stk->var.function);
 
@@ -186,6 +186,7 @@ void StackDump(stack_t* stk, const char* file, const char* function, size_t line
             fprintf(PointerToDump, "[%d] = %d \n", counter, stk->data[counter]);
         }
     }
+    return PointerToDump;
 }
 
 size_t StackVerify(stack_t* stk) {

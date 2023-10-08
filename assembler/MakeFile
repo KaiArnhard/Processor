@@ -1,6 +1,6 @@
 CC = g++
-CFLAGS = -I include
-CFLAGS1 = -I include -c -D __CRT_SECURE_NO_WARNINGS__
+CFLAGS = -I  ../include -D LINUX
+CFLAGS1 = -I ../include -D LINUX -c
 all: asm
 
 asm: main.o AsmFunctions.o input.o

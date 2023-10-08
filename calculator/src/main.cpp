@@ -1,11 +1,13 @@
 #include "proc.h"
 
 int main() {
-    stack_t stk;
-    STACK_CTOR(&stk);
+    SPU_t proc = {};
+    FILE* PtrToCM = fopen(PathToCm1, "r");
 
-    FILE* PtrToCM = fopen("../cm.txt", "r");
-    VirtualMachine(PtrToCM, &stk);
+    SPUCtor(&proc, PtrToCM);
+
+    VirtualMachine(&proc, PtrToCM);
     
-    StackDtor(&stk);
+    SPUDtor(&proc);
+    return 0;
 }
