@@ -4,8 +4,6 @@
 #include "stack.h"
 #include <cmath>
 
-#include "command.h"
-
 struct SPU_t {
     elem_t rax;
     elem_t rbx;

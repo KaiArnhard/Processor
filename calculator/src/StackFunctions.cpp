@@ -2,7 +2,7 @@
 #include <assert.h>
 
 void StackCtor (stack_t* stk, size_t capacity, const char* name, const size_t line, const char* file, const char* function) {
-    MyAssert(stk);
+    PTR_STACK_CHECK(stk);
 
     size_t size = 0;
     stk->capacity = capacity;
@@ -128,7 +128,7 @@ size_t StackResize(stack_t* stk, Resize_t CodeOfResize) {
         switch (CodeOfResize) {
         case DOWN:
             ptr = (char*) realloc(stk->data, sizeof(elem_t) * stk->OldCapacity);
-            MyAssert(ptr);
+            PTR_STACK_CHECK(ptr);
             stk->data = (elem_t*) ptr;
             stk->capacity = stk->OldCapacity;
             break;
@@ -136,7 +136,7 @@ size_t StackResize(stack_t* stk, Resize_t CodeOfResize) {
             OldCapacity = stk->capacity;
             stk->capacity *= ResizeConst;
             ptr = (char*) realloc(stk->data, sizeof(elem_t) * stk->capacity);
-            MyAssert(ptr);
+            PTR_STACK_CHECK(ptr);
             stk->data = (elem_t*) ptr;
             PoisStack(stk);
             break;
@@ -190,7 +190,7 @@ FILE* StackDump(stack_t* stk, const char* file, const char* function, size_t lin
 }
 
 size_t StackVerify(stack_t* stk) {
-    MyAssert(stk);
+    PTR_STACK_CHECK(stk);
     if (stk->data == nullptr) {
         MyErrorno |= STACK_ERROR_PTR_TO_DATA_ZERO;
     

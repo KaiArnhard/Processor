@@ -22,13 +22,14 @@
         }                                                                                                              \
     }           
 
-int assembly(const char* fname1, const char* fname2) {
-    FILE* fp = fopen(fname1, "w");
+int assembly(const char* PathToCm, const char* PathToAsm) {
+    FILE* fp = fopen(PathToCm, "w");
     assert(fp != nullptr);
+
     String* PtrToStr = nullptr;
     Lengths length = {};
 
-    char* buffer = InputBuffer(fname2, &length);
+    char* buffer = InputBuffer(PathToAsm, &length);
     
     PtrToStr = (String*) calloc(length.NumberOfLines, sizeof(String));
     
@@ -43,19 +44,17 @@ int assembly(const char* fname1, const char* fname2) {
         }
         int* command = (int*) shmat(shm_id, nullptr, 0);
     #else
-        int* command = (int*) calloc(length.NumberOfCommands, sizeof(int));
+        int* command = (int*) calloc(length.NumberOfCommands + 3, sizeof(int));
     #endif // LINUX
 
     comparator(PtrToStr, length.NumberOfLines, fp, command);
     
     free(PtrToStr);
-    //fclose(fp);
     
     return 0;
 }
 
-void comparator(String* PtrToStr, size_t NumbOfLines, FILE* PtrToCm, int* command) {
-    char buff[20] = {};
+int comparator(String* PtrToStr, size_t NumbOfLines, FILE* PtrToCm, int* command) {
     char reg[4] = {};
     size_t NumbOfComs = 3;
     int dbg = 0;
@@ -64,11 +63,17 @@ void comparator(String* PtrToStr, size_t NumbOfLines, FILE* PtrToCm, int* comman
         ((char*)command)[counter] = *((char*) &signature + counter);
     }
     command[1] = version;
-
+    
     for (size_t counter = 0; counter < NumbOfLines; counter++) {
         int value = __INT_MAX__;
+        char buff[20] = {};
+        
         sscanf(PtrToStr[counter].ptrtostr, "%s%d", buff, &value);
-
+        if (buff[0] == '\0' && buff[1] == '\0') {
+            counter++;
+            sscanf(PtrToStr[counter].ptrtostr, "%s%d", buff, &value);
+        }
+        printf("%s\n", buff);
         #include "command_compare.h"
         else COMMAND_COMPARE("IN",   buff, STACK_IN)
         else COMMAND_COMPARE("POP",  buff, STACK_POP)
@@ -81,22 +86,12 @@ void comparator(String* PtrToStr, size_t NumbOfLines, FILE* PtrToCm, int* comman
         else COMMAND_COMPARE("OUT",  buff, OUT)
         else COMMAND_COMPARE("HLT",  buff, HLT)
         else {
-            printf(RED);
-            printf("Syntax Error\n");
-            printf("Entered command is %s\n", buff);
-            #if defined(LINUX)
-                shmdt(command);
-            #endif // LINUX
-            abort();
-        } 
-
-        if (command[NumbOfComs - 1] == REG_ERR) {
-            printf(RED);
-            printf("You entered wrong register, it is %s\n", reg);
-            #if defined(LINUX)
-                shmdt(command);
-            #endif // LINUX
-            abort();
+            MyAssert(0 && "Syntax error!");
+            Error = -1;
+        }  
+        if (command[counter - 1] == REG_ERR) {
+            MyAssert(command[counter - 1] != REG_ERR && "You entered wrong register");
+            Error = -1;
         }
     }
     command[2] = NumbOfComs - 3;
@@ -104,41 +99,47 @@ void comparator(String* PtrToStr, size_t NumbOfLines, FILE* PtrToCm, int* comman
     fwrite(command, sizeof(int), NumbOfComs, PtrToCm);
     fclose(PtrToCm);
     
-    FILE* fp = fopen(PathToCm1, "r");
+    FILE* fp = fopen("../cm.bin", "r");
     int cm[NumbOfComs];
     fread(cm, sizeof(int), NumbOfComs, fp);
     fclose(fp);
     for (size_t i = 0; i < NumbOfComs; i++) {
-        printf("%d\t", cm[i]);
+        printf("%d\n", cm[i]);
     }
-    
-
     #if defined(LINUX)
         shmdt(command);
     #else
         free(command);
     #endif // LINUX
+
+    return 0;
 }
 
 int disassembly(const char* DisAsmName, const char* CmName) {
     FILE* PtrToAsm = fopen(DisAsmName, "w");
     FILE* PtrToCm  = fopen(CmName,     "r");
     
-    int command = __INT_MAX__;
     int tmp = __INT_MAX__;
-    size_t NumbOfLines = 0;
-    
-    fscanf(PtrToCm, "%d", &NumbOfLines);
+    char BitComm = 0;
+    char Identif = 0;
+    bitwise(&BitComm, &Identif);
 
-    for (size_t counter = 0; counter < NumbOfLines; counter++) {
-        fscanf(PtrToCm, "%d", &command);    
-        switch (command) {
+    int cm[3] = {};
+    fread(cm, sizeof(int), 3, PtrToCm);
+    fwrite(cm, sizeof(int), 3, PtrToAsm);
+    
+    int* command = (int*) calloc(cm[2], sizeof(int));
+    fread(command, sizeof(int), cm[2], PtrToCm);
+
+    for (size_t counter = 0; counter < cm[2]; counter++) {
+        switch (command[counter] & BitComm) {
         case HLT:
             fprintf(PtrToAsm, "HLT\n");
             break;
         case STACK_PUSH:
             fprintf(PtrToAsm, "PUSH ");
-            fscanf(PtrToCm, "%d", &tmp);
+            tmp = command[counter + 1];
+            counter++;
             fprintf(PtrToAsm, "%d\n", tmp);
             break;
         case STACK_IN:
@@ -146,6 +147,7 @@ int disassembly(const char* DisAsmName, const char* CmName) {
             break;
         case STACK_POP:
             fprintf(PtrToAsm, "POP\n");
+            tmp = command[++counter];
             break;
         case ADD:
             fprintf(PtrToAsm, "ADD\n");
@@ -172,13 +174,30 @@ int disassembly(const char* DisAsmName, const char* CmName) {
             fprintf(PtrToAsm, "OUT\n");
             break;
         default:
-            abort();
-        break;
+            MyAssert(1 && "Wrong instruction");
+            Error = -1;
+            return Error;
+            break;
         }    
     }
 
+    free(command);
     fclose(PtrToAsm);
     fclose(PtrToCm);
 
     return 0;
+}
+
+int bitwise(char* BitComm, char* Identif) {
+    for (size_t counter = 0; counter < 4; counter++) {
+        *BitComm += 1 << counter;
+        *Identif += 16 << counter;
+    }
+    return 0;
+}
+
+void my_assertion_failed(const char* condition, const char* file, const char* function, const int line) {
+    printf(RED "Assertion failed on file %s on function %s:%d\n", file, function, line);
+    printf("Wrong condition: %s\n", condition);
+    printf(WHITE);
 }

@@ -21,11 +21,6 @@ char *InputBuffer (const char *FileName, Lengths *Length)
         Buffer[counter] = toupper(Buffer[counter]);
     }
 
-    char* tmp = strchr(Buffer, ';');
-    if (tmp) {
-        *tmp = '\0';
-    }
-
     Length->NumberOfLines++;
     for (size_t counter = 0; (counter + 1) < Length->LengthOfBuffer; counter++) {
         if (Buffer[counter] == '\n') {
@@ -36,27 +31,29 @@ char *InputBuffer (const char *FileName, Lengths *Length)
     return Buffer;
 }
 
-void InputPtrToBuffer (String *PtrToLine, Lengths *Length, char *Buffer)
-{
+void InputPtrToBuffer (String *PtrToLine, Lengths *Length, char *Buffer) {
     size_t counter  = 0;
     size_t counter1 = 0;
 
-    for (; counter < Length->LengthOfBuffer && counter1 < Length->NumberOfLines; counter++)
-    {
-        if (Buffer[counter - 1] == '\0')
-        {
-            while(!isalpha(Buffer[counter]))
-            {
-                counter++;
-            }
-            (PtrToLine + counter1)->ptrtostr = Buffer + counter;
-            (PtrToLine + counter1)->lengthofstr = strlen(PtrToLine[counter1].ptrtostr);
-            if ((PtrToLine + counter1)->lengthofstr > 5) {
+    for (; counter < Length->LengthOfBuffer && counter1 < Length->NumberOfLines; counter++) {
+        if (Buffer[counter - 1] == '\0') {
+            PtrToLine[counter1].ptrtostr = Buffer + counter;
+            PtrToLine[counter1].lengthofstr = strlen(PtrToLine[counter1].ptrtostr);
+            if (PtrToLine[counter1].lengthofstr > 5) {
                 Length->NumberOfCommands += 2;
             } else {
                 Length->NumberOfCommands++;
             }
             counter1++;
+        }
+    }
+    for (size_t count = 0; count < counter1; count++) {
+        char* tmp = strchr(PtrToLine[count].ptrtostr, ';');
+        if (tmp != nullptr) {
+            size_t size = strlen(tmp);
+            for (size_t i = 0; i < size; i++) {
+                tmp[i] = '\0';
+            }    
         }
     }
     Length->NumberOfLines = counter1;

@@ -1,4 +1,5 @@
 #include "proc.h"
+#include "command.h"
 
 void SPUCtor(SPU_t* proc, FILE* PtrToCm) {
     int check[3] = {};
@@ -8,11 +9,9 @@ void SPUCtor(SPU_t* proc, FILE* PtrToCm) {
     if (check[0] != signature) {
         printf(RED);
         printf("Wrong signature!\n");
-        abort();
     } else if (check[1] != version) {
         printf(RED);
         printf("Wrong version! %d\n", check[1]);
-        abort();
     }
     proc->NumbOfComs = check[2];
     proc->CurrentCommand = 0;
@@ -26,8 +25,9 @@ void SPUCtor(SPU_t* proc, FILE* PtrToCm) {
         }
         proc->command = (elem_t*) shmat(shm_id, nullptr, 0);
     #else
-        size_t size = (proc->NumbOfComs + 1);
+        size_t size = proc->NumbOfComs;
         proc->command = (elem_t*) calloc(size, sizeof(elem_t));
+        fread(proc->command, sizeof(int), proc->NumbOfComs, PtrToCm);
     #endif // LINUX
     
     STACK_CTOR(&proc->stk);
@@ -171,16 +171,16 @@ int VirtualMachine(SPU_t* proc, FILE* PtrToCm) {
     char Identif = 0;
     bitwise(&BitComm ,&Identif);
 
-    for (size_t i = 0; i < proc->command[2] + 3; i++) {
+    for (size_t i = 0; i < proc->NumbOfComs; i++) {
         printf("%d\n", proc->command[i]);
     }
     
-    for (size_t counter = 3;; counter++) {
+    for (size_t counter = 0;; counter++) {
         SPU_DUMP(proc);
         switch ((proc->command[counter] & BitComm)) {
         case HLT:
             printf("\nProgramm ended succesfully\n");
-            exit(0);
+            return 0;
             break;
         case STACK_PUSH:
             tmp = proc->command[++counter];
@@ -217,8 +217,8 @@ int VirtualMachine(SPU_t* proc, FILE* PtrToCm) {
             StackPush(&proc->stk, tmp);
             break;
         case STACK_POP:
-        tmp = proc->command[++counter];
-        proc->CurrentCommand++;
+            tmp = proc->command[++counter];
+            proc->CurrentCommand++;
             switch (proc->command[counter - 1] & Identif) {
             case regis:
                 switch (tmp) {
@@ -237,9 +237,7 @@ int VirtualMachine(SPU_t* proc, FILE* PtrToCm) {
                 }
                 break;
             case immed:
-                printf(RED);
-                printf("You trying to pop constant! Are you idiot?\n");
-                abort();
+                MyAssert((proc->command[counter - 1] & Identif == immed) && "You are trying to pop a constant! Are you idiot!?");
                 break;
             }
             break;
@@ -269,15 +267,12 @@ int VirtualMachine(SPU_t* proc, FILE* PtrToCm) {
             out(&proc->stk);
             break;
         default:
-            printf(RED);
-            printf("\nSYNTAX ERROR\n");
-            printf("NUMBER OF COMMAND IS %d\n", proc->command[counter]);
-            abort();
+            MyAssert(1 && "SYNTAX ERROR!");
         break;
         }
         proc->CurrentCommand++;
     }
-    return 0;
+    return -1;
 }
 
 int bitwise(char* BitComm, char* Identif) {
@@ -286,4 +281,10 @@ int bitwise(char* BitComm, char* Identif) {
         *Identif += 16 << counter;
     }
     return 0;
+}
+
+void my_assertion_failed(const char* condition, const char* file, const char* function, const int line) {
+    printf(RED "Assertion failed on file %s on function %s:%d\n", file, function, line);
+    printf("Wrong condition: %s\n", condition);
+    printf(WHITE);
 }

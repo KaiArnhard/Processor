@@ -1,7 +1,6 @@
 CC = g++
-OPERATION_SYSTEM = LINUX
-CFLAGS = -I  ../include -D LINUX
-CFLAGS1 = -I ../include -D LINUX -c
+CFLAGS  = -I  ../include
+CFLAGS1 = -I ../include -c
 all: proc
 
 proc: main.o ProcFunctions.o StackFunctions.o
