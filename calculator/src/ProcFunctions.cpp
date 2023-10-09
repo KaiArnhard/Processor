@@ -238,6 +238,7 @@ int VirtualMachine(SPU_t* proc, FILE* PtrToCm) {
                 break;
             case immed:
                 MyAssert((proc->command[counter - 1] & Identif == immed) && "You are trying to pop a constant! Are you idiot!?");
+                Error = -1;
                 break;
             }
             break;
@@ -268,11 +269,12 @@ int VirtualMachine(SPU_t* proc, FILE* PtrToCm) {
             break;
         default:
             MyAssert(1 && "SYNTAX ERROR!");
+            Error = -1;
         break;
         }
         proc->CurrentCommand++;
     }
-    return -1;
+    return 0;
 }
 
 int bitwise(char* BitComm, char* Identif) {

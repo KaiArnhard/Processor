@@ -16,5 +16,5 @@ int main(int argc, char* argv[]) {
     VirtualMachine(&proc, PtrToCM);
     
     SPUDtor(&proc);
-    return 0;
+    return Error;
 }
