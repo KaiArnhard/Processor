@@ -23,7 +23,7 @@
     }           
 
 int assembly(const char* PathToCm, const char* PathToAsm) {
-    FILE* fp = fopen(PathToCm, "w");
+    FILE* fp = fopen(PathToCm, "wb");
     assert(fp != nullptr);
 
     String* PtrToStr = nullptr;
@@ -59,9 +59,7 @@ int comparator(String* PtrToStr, size_t NumbOfLines, FILE* PtrToCm, int* command
     size_t NumbOfComs = 3;
     int dbg = 0;
 
-    for (size_t counter = 0; counter < sizeof(int); counter++) {
-        ((char*)command)[counter] = *((char*) &signature + counter);
-    }
+    command[0] = signature;
     command[1] = version;
     
     for (size_t counter = 0; counter < NumbOfLines; counter++) {
@@ -69,11 +67,10 @@ int comparator(String* PtrToStr, size_t NumbOfLines, FILE* PtrToCm, int* command
         char buff[20] = {};
         
         sscanf(PtrToStr[counter].ptrtostr, "%s%d", buff, &value);
-        if (buff[0] == '\0' && buff[1] == '\0') {
-            counter++;
-            sscanf(PtrToStr[counter].ptrtostr, "%s%d", buff, &value);
+        if (buff[0] == '\0') {
+            sscanf(PtrToStr[++counter].ptrtostr, "%s%d", buff, &value);
         }
-        printf("%s\n", buff);
+        //printf("%s\n", buff);
         #include "command_compare.h"
         else COMMAND_COMPARE("IN",   buff, STACK_IN)
         else COMMAND_COMPARE("POP",  buff, STACK_POP)
@@ -99,8 +96,8 @@ int comparator(String* PtrToStr, size_t NumbOfLines, FILE* PtrToCm, int* command
     fwrite(command, sizeof(int), NumbOfComs, PtrToCm);
     fclose(PtrToCm);
     
-    FILE* fp = fopen("../cm.bin", "r");
-    int cm[NumbOfComs];
+    FILE* fp = fopen("../cm.bin", "rb");
+    int cm[NumbOfComs + 3];
     fread(cm, sizeof(int), NumbOfComs, fp);
     fclose(fp);
     for (size_t i = 0; i < NumbOfComs; i++) {
@@ -116,15 +113,12 @@ int comparator(String* PtrToStr, size_t NumbOfLines, FILE* PtrToCm, int* command
 }
 
 int disassembly(const char* DisAsmName, const char* CmName) {
-    FILE* PtrToAsm = fopen(DisAsmName, "w");
-    FILE* PtrToCm  = fopen(CmName,     "r");
+    FILE* PtrToAsm = fopen(DisAsmName, "wb");
+    FILE* PtrToCm  = fopen(CmName,     "rb");
     
     int tmp = __INT_MAX__;
-    char BitComm = 0;
-    char Identif = 0;
-    bitwise(&BitComm, &Identif);
-
     int cm[3] = {};
+
     fread(cm, sizeof(int), 3, PtrToCm);
     fwrite(cm, sizeof(int), 3, PtrToAsm);
     
@@ -132,8 +126,8 @@ int disassembly(const char* DisAsmName, const char* CmName) {
     fread(command, sizeof(int), cm[2], PtrToCm);
 
     for (size_t counter = 0; counter < cm[2]; counter++) {
-        switch (command[counter] & BitComm) {
-        case HLT:
+        switch (command[counter] & BITCOMM) {
+        case (HLT & BITCOMM):
             fprintf(PtrToAsm, "HLT\n");
             break;
         case STACK_PUSH:

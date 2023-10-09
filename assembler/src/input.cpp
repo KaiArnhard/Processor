@@ -50,10 +50,7 @@ void InputPtrToBuffer (String *PtrToLine, Lengths *Length, char *Buffer) {
     for (size_t count = 0; count < counter1; count++) {
         char* tmp = strchr(PtrToLine[count].ptrtostr, ';');
         if (tmp != nullptr) {
-            size_t size = strlen(tmp);
-            for (size_t i = 0; i < size; i++) {
-                tmp[i] = '\0';
-            }    
+            tmp[0] = '\0';    
         }
     }
     Length->NumberOfLines = counter1;

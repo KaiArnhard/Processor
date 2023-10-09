@@ -9,7 +9,7 @@ int main(int argc, char* argv[]) {
         printf(RED "You entered too many names of files\n");
     }
     
-    FILE* PtrToCM = fopen(argv[1], "r");
+    FILE* PtrToCM = fopen(argv[1], "rb");
 
     SPUCtor(&proc, PtrToCM);
 
