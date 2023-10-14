@@ -3,25 +3,6 @@
 #include "FileInput.h"
 #include <cstring>
 
-#define COMMAND_COMPARE(StrCommand, buffer, command_number)                                                            \
-    if (!strcmp(buffer, StrCommand)) {                                                                                 \
-        command[NumbOfComs] = command_number;                                                                          \
-        NumbOfComs++;                                                                                                  \
-        if (value != __INT_MAX__) {                                                                                    \
-            command[NumbOfComs - 1] += immed;                                                                          \
-            command[NumbOfComs] = value;                                                                               \
-            NumbOfComs++;                                                                                              \
-        } else if ((dbg = sscanf(PtrToStr[counter].ptrtostr + strlen(StrCommand), "%s", reg)) != 0 && dbg != EOF) {    \
-            if (reg[0] != 'R' || reg[2] != 'X' || (reg[1] - 'A') > 3) {                                                \
-                command[NumbOfComs - 1] = REG_ERR;                                                                     \
-            } else {                                                                                                   \
-                command[NumbOfComs - 1] += regis;                                                                      \
-                command[NumbOfComs] = reg[1] - 'A';                                                                    \
-                NumbOfComs++;                                                                                          \
-            }                                                                                                          \
-        }                                                                                                              \
-    }           
-
 int assembly(const char* PathToCm, const char* PathToAsm) {
     FILE* fp = fopen(PathToCm, "wb");
     assert(fp != nullptr);
@@ -55,7 +36,26 @@ int assembly(const char* PathToCm, const char* PathToAsm) {
 }
 
 int comparator(String* PtrToStr, size_t NumbOfLines, FILE* PtrToCm, int* command) {
-    char reg[4] = {};
+
+    #define DEF_CMD(name, numb, arg, ...)                                                                                 \
+        if (!strcmp(buffer, #name)) {                                                                                     \
+            command[NumbOfComs] = CMD_##name;                                                                             \
+            NumbOfComs++;                                                                                                 \
+            if(arg) {                                                                                                     \
+                if(sscanf(PtrToStr[counter].ptrtostr + strlen(#name), "%d", command + NumbOfComs))  {                     \
+                    command[NumbOfComs - 1] += immed;                                                                     \
+                } else if ((dbg = sscanf(PtrToStr[counter].ptrtostr + strlen(#name), "%s", reg)) != 0 && dbg != EOF) {    \
+                if (reg[0] != 'R' || reg[2] != 'X' || (reg[1] - 'A') > 3) {                                               \
+                    command[NumbOfComs - 1] = REG_ERR;                                                                    \
+                } else {                                                                                                  \
+                    command[NumbOfComs - 1] += regis;                                                                     \
+                    command[NumbOfComs] = reg[1] - 'A';                                                                   \
+                }                                                                                                         \
+            }                                                                                                             \
+                NumbOfComs++;                                                                                             \
+            }                                                                                                             \
+        } else                                                                                                            \
+
     size_t NumbOfComs = 3;
     int dbg = 0;
 
@@ -63,34 +63,25 @@ int comparator(String* PtrToStr, size_t NumbOfLines, FILE* PtrToCm, int* command
     command[1] = version;
     
     for (size_t counter = 0; counter < NumbOfLines; counter++) {
-        int value = __INT_MAX__;
-        char buff[20] = {};
-        
-        sscanf(PtrToStr[counter].ptrtostr, "%s%d", buff, &value);
-        if (buff[0] == '\0') {
-            sscanf(PtrToStr[++counter].ptrtostr, "%s%d", buff, &value);
+        char buffer[20] = {};
+        char reg[4]     = {};
+        sscanf(PtrToStr[counter].ptrtostr, "%s", buffer);
+        if (buffer[0] == '\0') {
+            sscanf(PtrToStr[++counter].ptrtostr, "%s", buffer);
         }
-        //printf("%s\n", buff);
-        #include "command_compare.h"
-        else COMMAND_COMPARE("IN",   buff, STACK_IN)
-        else COMMAND_COMPARE("POP",  buff, STACK_POP)
-        else COMMAND_COMPARE("ADD",  buff, ADD)
-        else COMMAND_COMPARE("SUB",  buff, SUB)
-        else COMMAND_COMPARE("DIV",  buff, DIV)
-        else COMMAND_COMPARE("SQRT", buff, SQRT)
-        else COMMAND_COMPARE("SIN",  buff, SIN)
-        else COMMAND_COMPARE("COS",  buff, COS)
-        else COMMAND_COMPARE("OUT",  buff, OUT)
-        else COMMAND_COMPARE("HLT",  buff, HLT)
-        else {
-            MyAssert(0 && "Syntax error!");
+        
+        #include "dsl.h"
+        
+        /*else*/ {
+            MyAssert(command[counter] == __INT_MAX__ && "Syntax error!", buffer);
             Error = -1;
         }  
         if (command[counter - 1] == REG_ERR) {
-            MyAssert(command[counter - 1] != REG_ERR && "You entered wrong register");
+            MyAssert(command[counter - 1] != REG_ERR && "You entered wrong register!", reg);
             Error = -1;
         }
     }
+    #undef DEF_CMD
     command[2] = NumbOfComs - 3;
 
     fwrite(command, sizeof(int), NumbOfComs, PtrToCm);
@@ -101,8 +92,9 @@ int comparator(String* PtrToStr, size_t NumbOfLines, FILE* PtrToCm, int* command
     fread(cm, sizeof(int), NumbOfComs, fp);
     fclose(fp);
     for (size_t i = 0; i < NumbOfComs; i++) {
-        printf("%d\n", cm[i]);
+        printf("%d\t", cm[i]);
     }
+    printf("\n\n");
     #if defined(LINUX)
         shmdt(command);
     #else
@@ -112,15 +104,19 @@ int comparator(String* PtrToStr, size_t NumbOfLines, FILE* PtrToCm, int* command
     return 0;
 }
 
-int disassembly(const char* DisAsmName, const char* CmName) {
-    FILE* PtrToAsm = fopen(DisAsmName, "wb");
-    FILE* PtrToCm  = fopen(CmName,     "rb");
+/*int disassembly(const char* DisAsmName, const char* CmName) {
+    FILE* PtrToAsm = fopen(DisAsmName, "w");
+    FILE* PtrToCm  = fopen(CmName,     "r");
     
     int tmp = __INT_MAX__;
     int cm[3] = {};
 
     fread(cm, sizeof(int), 3, PtrToCm);
     fwrite(cm, sizeof(int), 3, PtrToAsm);
+
+    for (size_t i = 0; i < 3; i++) {
+        printf("%d\n", cm[i]);
+    }
     
     int* command = (int*) calloc(cm[2], sizeof(int));
     fread(command, sizeof(int), cm[2], PtrToCm);
@@ -180,18 +176,11 @@ int disassembly(const char* DisAsmName, const char* CmName) {
     fclose(PtrToCm);
 
     return 0;
-}
+}*/
 
-int bitwise(char* BitComm, char* Identif) {
-    for (size_t counter = 0; counter < 4; counter++) {
-        *BitComm += 1 << counter;
-        *Identif += 16 << counter;
-    }
-    return 0;
-}
-
-void my_assertion_failed(const char* condition, const char* file, const char* function, const int line) {
+void my_assertion_failed(const char* condition, const char* command, const char* file, const char* function, const int line) {
     printf(RED "Assertion failed on file %s on function %s:%d\n", file, function, line);
     printf("Wrong condition: %s\n", condition);
+    printf("Intered command or register %s\n", command);
     printf(WHITE);
 }

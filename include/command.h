@@ -15,31 +15,18 @@
 #define GREEN  "\e[0;32m"
 #define YELLOW "\e[0;33m"
 #define WHITE  "\e[0;37m"
+#define BLUE   "\e[0;34m"
 
-#define MyAssert(condition)                                                                                      \
-    ((bool) (condition) ? void (0) : my_assertion_failed(#condition, __FILE__, __PRETTY_FUNCTION__, __LINE__))   \
+#define MyAssert(condition, command)                                                                                       \
+    ((bool) (condition) ? void (0) : my_assertion_failed(#condition, command, __FILE__, __PRETTY_FUNCTION__, __LINE__))    \
+
+#define DEF_CMD(name, numb, ...)    \
+    CMD_##name = numb,
 
 enum command_t {
-    HLT        = -1,
-    STACK_PUSH =  0,
-    STACK_IN   =  1,
-    STACK_POP  =  2,
-    ADD        =  3,
-    SUB        =  4,
-    DIV        =  5,
-    MUL        =  6,
-    SQRT       =  7,
-    SIN        =  8,
-    COS        =  9,
-    OUT        =  10
+    #include "dsl.h"
 };
-
-enum REG_CODE {
-    RAX = 0,
-    RBX = 1,
-    RCX = 2,
-    RDX = 3
-};
+#undef DEF_CMD
 
 enum POP_PUSH_CODES {
     BITCOMM = 15 << 0,
@@ -54,11 +41,10 @@ static const int version   = 2;
 static const size_t immed = 1 << 4; //16
 static const size_t regis = 1 << 5; //32
 
-void my_assertion_failed(const char* condition, const char* file, const char* function, const int line);
+void my_assertion_failed(const char* condition, const char* command, const char* file, const char* function, const int line);
 
 int assembly(const char* PathToCm, const char* PathToAsm);
 int disassembly(const char* DisAsmName, const char* CmName);
 int comparator(String* PtrToStr, size_t NumbOfLines, FILE* PtrToCm, int* commands);
-int bitwise(char* BitComm, char* Identif);
 
 #endif // COMMAND_H

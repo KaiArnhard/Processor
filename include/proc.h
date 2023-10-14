@@ -5,10 +5,7 @@
 #include <cmath>
 
 struct SPU_t {
-    elem_t rax;
-    elem_t rbx;
-    elem_t rcx;
-    elem_t rdx;
+    elem_t Register[4];
 
     stack_t stk;
     
