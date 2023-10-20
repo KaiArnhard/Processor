@@ -28,14 +28,43 @@ int assembly(const char* PathToCm, const char* PathToAsm) {
         int* command = (int*) calloc(length.NumberOfCommands + 3, sizeof(int));
     #endif // LINUX
 
-    comparator(PtrToStr, length.NumberOfLines, fp, command);
+    labels label[10];
+
+    comparator(PtrToStr, length.NumberOfLines, fp, command, label);
+
+    size_t NumbOfComs = command[2] + 3;
+
+    for (size_t counter = 0; counter < NumbOfComs; counter++) {
+        if (command[counter] = -1) {
+            comparator(PtrToStr, length.NumberOfLines, fp, command, label);
+            break;
+        }   
+    }
+
+    fwrite(command, sizeof(int), NumbOfComs, fp);
+    fclose(fp);
     
+    FILE* fp1 = fopen("../cm.bin", "rb");
+    int cm[NumbOfComs];
+    fread(cm, sizeof(int), NumbOfComs, fp1);
+    fclose(fp1);
+    for (size_t i = 0; i < NumbOfComs; i++) {
+        printf("%d\n", cm[i]);
+    }
+    printf("\n");
+
     free(PtrToStr);
     
+    #if defined(LINUX)
+        shmdt(command);
+    #else
+        free(command);
+    #endif // LINUX
+
     return 0;
 }
 
-int comparator(String* PtrToStr, size_t NumbOfLines, FILE* PtrToCm, int* command) {
+int comparator(String* PtrToStr, size_t NumbOfLines, FILE* PtrToCm, int* command, labels* label) {
 
     #define DEF_CMD(name, numb, arg, ...)                                                                                 \
         if (!strcmp(buffer, #name)) {                                                                                     \
@@ -44,64 +73,68 @@ int comparator(String* PtrToStr, size_t NumbOfLines, FILE* PtrToCm, int* command
             if(arg) {                                                                                                     \
                 if(sscanf(PtrToStr[counter].ptrtostr + strlen(#name), "%d", command + NumbOfComs))  {                     \
                     command[NumbOfComs - 1] += immed;                                                                     \
-                } else if ((dbg = sscanf(PtrToStr[counter].ptrtostr + strlen(#name), "%s", reg)) != 0 && dbg != EOF) {    \
-                if (reg[0] != 'R' || reg[2] != 'X' || (reg[1] - 'A') > 3) {                                               \
-                    command[NumbOfComs - 1] = REG_ERR;                                                                    \
-                } else {                                                                                                  \
+                } else if ((dbg = sscanf(PtrToStr[counter].ptrtostr + strlen(#name), "%s", buff)) != 0 && dbg != EOF) {   \
+                    if ((ptr = strchr(buff, ':')) != nullptr) {                                                           \
+                        command[NumbOfComs - 1] += immed;                                                                 \
+                        command[NumbOfComs] = label_check(buff, label, label_counter);                                    \
+                    } else if(buff[0] != 'R' || buff[2] != 'X' || (buff[1] - 'A') > 3) {                                  \
+                        command[NumbOfComs - 1] = REG_ERR;                                                                \
+                    } else {                                                                                              \
                     command[NumbOfComs - 1] += regis;                                                                     \
-                    command[NumbOfComs] = reg[1] - 'A';                                                                   \
+                    command[NumbOfComs] = buff[1] - 'A';                                                                  \
                 }                                                                                                         \
             }                                                                                                             \
                 NumbOfComs++;                                                                                             \
             }                                                                                                             \
-        } else                                                                                                            \
+        } else if ((ptr = strchr(buffer, ':')) != nullptr) {                                                              \
+            strcpy(label[label_counter].point, buffer);                                                                   \
+            label[label_counter].addres = NumbOfComs - 3;                                                                 \
+            label_counter++;                                                                                              \
+        } else
+        
+    size_t label_counter = 0;
+
+    char buff[100]   = {};
+    char *ptr        = 0;
 
     size_t NumbOfComs = 3;
     int dbg = 0;
 
     command[0] = signature;
-    command[1] = version;
+    command[1] = version;                                             
     
     for (size_t counter = 0; counter < NumbOfLines; counter++) {
-        char buffer[20] = {};
-        char reg[4]     = {};
+        char buffer[100] = {};
         sscanf(PtrToStr[counter].ptrtostr, "%s", buffer);
+        
         if (buffer[0] == '\0') {
             sscanf(PtrToStr[++counter].ptrtostr, "%s", buffer);
         }
-        
         #include "dsl.h"
-        
         /*else*/ {
             MyAssert(command[counter] == __INT_MAX__ && "Syntax error!", buffer);
             Error = -1;
-        }  
-        if (command[counter - 1] == REG_ERR) {
-            MyAssert(command[counter - 1] != REG_ERR && "You entered wrong register!", reg);
+        } if (command[counter - 1] == REG_ERR) {
+            MyAssert(command[counter - 1] != REG_ERR && "You entered wrong register!", buff);
             Error = -1;
-        }
+        }   
     }
-    #undef DEF_CMD
     command[2] = NumbOfComs - 3;
 
-    fwrite(command, sizeof(int), NumbOfComs, PtrToCm);
-    fclose(PtrToCm);
-    
-    FILE* fp = fopen("../cm.bin", "rb");
-    int cm[NumbOfComs + 3];
-    fread(cm, sizeof(int), NumbOfComs, fp);
-    fclose(fp);
-    for (size_t i = 0; i < NumbOfComs; i++) {
-        printf("%d\t", cm[i]);
+    for (size_t i = 0; i < 10; i++) {
+        printf("%d\t%s\n", label[i].addres, label[i].point);
     }
-    printf("\n\n");
-    #if defined(LINUX)
-        shmdt(command);
-    #else
-        free(command);
-    #endif // LINUX
-
+    
     return 0;
+}
+
+int label_check(char* buffer, labels* label, size_t label_counter) {
+    for (size_t counter = 0; counter <= label_counter; counter++) {
+        if (!strcmp(buffer, label[counter].point)) {
+            return label[counter].addres;
+        }
+    }
+    return -1;
 }
 
 /*int disassembly(const char* DisAsmName, const char* CmName) {
@@ -181,6 +214,6 @@ int comparator(String* PtrToStr, size_t NumbOfLines, FILE* PtrToCm, int* command
 void my_assertion_failed(const char* condition, const char* command, const char* file, const char* function, const int line) {
     printf(RED "Assertion failed on file %s on function %s:%d\n", file, function, line);
     printf("Wrong condition: %s\n", condition);
-    printf("Intered command or register %s\n", command);
+    printf("Intered %s\n", command);
     printf(WHITE);
 }

@@ -30,6 +30,7 @@ elem_t proc_sqrt(stack_t* stk);
 elem_t proc_sin(stack_t* stk);
 elem_t proc_cos(stack_t* stk);
 elem_t out(stack_t* stk);
+size_t jump(SPU_t* proc, size_t tmp);
 
 int VirtualMachine(SPU_t* stk, FILE* PtrToCm);
 void ProcComparator(SPU_t* proc);

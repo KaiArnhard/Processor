@@ -33,6 +33,12 @@ enum POP_PUSH_CODES {
     IDENTIF = 15 << 4
 };
 
+struct labels {
+    char point[100] = { };
+    int addres = -1;
+};
+
+
 static int Error = 0;
 static const u_char REG_ERR = -1;
 static const int signature = *((int*) "KLEO");
@@ -45,6 +51,8 @@ void my_assertion_failed(const char* condition, const char* command, const char*
 
 int assembly(const char* PathToCm, const char* PathToAsm);
 int disassembly(const char* DisAsmName, const char* CmName);
-int comparator(String* PtrToStr, size_t NumbOfLines, FILE* PtrToCm, int* commands);
+int comparator(String* PtrToStr, size_t NumbOfLines, FILE* PtrToCm, int* commands, labels* label);
+
+int label_check(char* buffer, labels* label, size_t label_counter);
 
 #endif // COMMAND_H

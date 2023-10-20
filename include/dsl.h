@@ -3,9 +3,8 @@ DEF_CMD(HLT, -1, 0,
                     return Error;
             )
 DEF_CMD(PUSH, 0, 1,
-                    tmp = proc->command[++counter];
-                    proc->CurrentCommand++;
-                    switch (proc->command[counter - 1] & IDENTIF) {
+                    tmp = proc->command[++proc->CurrentCommand];
+                    switch (proc->command[proc->CurrentCommand - 1] & IDENTIF) {
                     case regis:
                         StackPush(&proc->stk, proc->Register[tmp]);
                         break;
@@ -14,14 +13,13 @@ DEF_CMD(PUSH, 0, 1,
                         break;
                     })
 DEF_CMD(POP,  1, 1, 
-                    tmp = proc->command[++counter];
-                    proc->CurrentCommand++;
-                    switch (proc->command[counter - 1] & IDENTIF) {
+                    tmp = proc->command[++proc->CurrentCommand];
+                    switch (proc->command[proc->CurrentCommand - 1] & IDENTIF) {
                     case regis:
                         StackPop(&proc->stk, proc->Register + tmp);
                         break;
                     case immed:
-                        MyAssert((proc->command[counter - 1] & IDENTIF == immed) && "You are trying to pop a constant! Are you idiot!?", (char*) &(proc->command[counter]));
+                        MyAssert((proc->command[proc->CurrentCommand - 1] & IDENTIF == immed) && "You are trying to pop a constant! Are you idiot!?", (char*) &(proc->command[proc->CurrentCommand]));
                         Error = -1;
                         break;
                     })
@@ -50,5 +48,13 @@ DEF_CMD(COS,  9, 0,
 DEF_CMD(OUT, 10, 0,
                     printf(GREEN"RESULT:\n");
                     out(&proc->stk);)
+DEF_CMD(JMP, 11, 1, 
+                    tmp = proc->command[++proc->CurrentCommand];
+                    if (tmp == -1) {
+                        MyAssert(tmp != -1 && "You entered wrong label", "pampam");
+                        Error = -1;
+                    } else {
+                    jump(proc, tmp);
+                    })
 
 #include "dsl_undef.h"

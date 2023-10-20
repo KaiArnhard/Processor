@@ -174,7 +174,7 @@ FILE* StackDump(stack_t* stk, const char* file, const char* function, size_t lin
     fprintf(PointerToDump, "data [%p] \n", stk->data);
 
     if (Error[1] || Error[3] || Error[4]) {
-        abort();
+        exit(-1);
     }
     
     if (!Error[4] && !Error[5]) {

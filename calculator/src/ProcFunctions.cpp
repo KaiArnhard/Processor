@@ -71,11 +71,12 @@ void SPUDump(SPU_t* proc, const char* file, const char* function, size_t line) {
     fprintf(PointerToDump, "\n");
     for (size_t counter = 0; counter < proc->NumbOfComs; counter++) {
         if (counter == proc->CurrentCommand) {
-            fprintf(PointerToDump, "[%.2d] ", proc->command[counter + 3]);
+            fprintf(PointerToDump, "[%.2d] ", proc->command[counter]);
         } else {
-            fprintf(PointerToDump, "%.2d ", proc->command[counter + 3]);
+            fprintf(PointerToDump, "%.2d ", proc->command[counter]);
         }
     }
+   fprintf(PointerToDump, "\n\nCurent command %d\n\n", proc->CurrentCommand);
     fprintf(PointerToDump, "\n");
 }
 
@@ -166,6 +167,11 @@ elem_t out(stack_t* stk) {
     return tmp;
 }
 
+size_t jump(SPU_t* proc, size_t tmp) {
+    proc->CurrentCommand = tmp - 1;
+    return proc->CurrentCommand;
+}
+
 int VirtualMachine(SPU_t* proc, FILE* PtrToCm) {
 
     #define DEF_CMD(name, numb, arg, code)  \
@@ -181,21 +187,20 @@ int VirtualMachine(SPU_t* proc, FILE* PtrToCm) {
         printf("%d\n", proc->command[i]);
     }
     
-    for (size_t counter = 0;; counter++) {
+    for (;;proc->CurrentCommand++) {
         SPU_DUMP(proc);
-        switch ((proc->command[counter] & BITCOMM)) {
+        switch (proc->command[proc->CurrentCommand] & BITCOMM) {
         #include "dsl.h"
         default:
-            MyAssert(1 && "SYNTAX ERROR!", (char*) &(proc->command[counter]));
+            MyAssert(1 && "SYNTAX ERROR!", (char*) &(proc->command[proc->CurrentCommand]));
             Error = -1;
-        break;
+            break;
         }
-        proc->CurrentCommand++;
     }
     return 0;
 }
 
-void my_assertion_failed(const char* condition,const char* command, const char* file, const char* function, const int line) {
+void my_assertion_failed(const char* condition, const char* command, const char* file, const char* function, const int line) {
     printf(RED "Assertion failed on file %s on function %s:%d\n", file, function, line);
     printf("Wrong condition: %s\n", condition);
     printf("%d\n" WHITE, *((int*) command));
