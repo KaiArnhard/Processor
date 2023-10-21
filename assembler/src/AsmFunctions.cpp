@@ -131,11 +131,11 @@ void InputAsmToFile(const label_t* label, const int* command, FILE* CommandFile,
     fwrite(command, sizeof(int), NumbOfComs, CommandFile);
 
     //debug print
-    DebugPrintOfAsm(label, command, CommandFile, NumbOfComs);    
+    DbgPrintOfAsmedFile(label, command, CommandFile, NumbOfComs);    
    
 }
 
-void DebugPrintOfAsm(const label_t* label, const int* command, FILE* CommandFile, const size_t NumbOfComs) {
+void DbgPrintOfAsmedFile(const label_t* label, const int* command, FILE* CommandFile, const size_t NumbOfComs) {
     fclose(CommandFile);
     FILE* fp1 = fopen("../cm.bin", "rb");
     int FCommand[NumbOfComs + 3];

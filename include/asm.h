@@ -20,7 +20,8 @@ int disassembly(const char* DisAsmName, const char* CmName);
 int Comparator(String* PtrToStr, size_t NumbOfLines, FILE* PtrToCm, int* commands, label_t* label);
 
 void InputAsmToFile(const label_t* label, const int* command, FILE* CommandFile, const size_t NumbOfComs);
-void DebugPrintOfAsm(const label_t* label, const int* command, FILE* CommandFile, const size_t NumbOfComs);
+void DbgPrintOfAsmedFile(const label_t* label, const int* command, FILE* CommandFile, const size_t NumbOfComs);
+
 void Destructor(label_t* label, int* command, String* PtrToStr);
 
 label_t* CtorLabel(label_t* label);
