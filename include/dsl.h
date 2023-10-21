@@ -97,5 +97,7 @@ DEF_CMD(JNE, 17, 1,
                     StackPop(&proc->stk, &tmp1);
                     MAKE_COND_JUMP(JNE, tmp1, !=)
                     )
+DEF_CMD(call, 18, 1,
+                    )
 
 #include "dsl_undef.h"

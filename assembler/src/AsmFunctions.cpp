@@ -4,8 +4,8 @@
 #include <cstring>
 
 int assembly(const char* PathToCm, const char* PathToAsm) {
-    FILE* fp = fopen(PathToCm, "wb");
-    assert(fp != nullptr);
+    FILE* CommandFile = fopen(PathToCm, "wb");
+    assert(CommandFile != nullptr);
 
     String* PtrToStr = nullptr;
     Lengths length = {};
@@ -16,7 +16,7 @@ int assembly(const char* PathToCm, const char* PathToAsm) {
     
     InputPtrToBuffer(PtrToStr, &length, buffer);
     
-    #if defined(LINUX)
+    #if defined(SHM)
         key_t key = ftok(PathToCm, proj_id);
         size_t size = (4 + length.NumberOfCommands) * sizeof(int);
         int shm_id = shmget(key, size, 0666 | IPC_CREAT |IPC_EXCL);
@@ -26,86 +26,61 @@ int assembly(const char* PathToCm, const char* PathToAsm) {
         int* command = (int*) shmat(shm_id, nullptr, 0);
     #else
         int* command = (int*) calloc(length.NumberOfCommands + 3, sizeof(int));
-    #endif // LINUX
+    #endif // SHM
 
-    labels* label;
+    label_t* label;
+    label = CtorLabel(label);
 
-    label = (labels*) calloc(default_label_size, sizeof(labels));
-    for (size_t counter = 0; counter < default_label_size; counter++) {
-        label[counter].addres = -1;
-    }
-    comparator(PtrToStr, length.NumberOfLines, fp, command, label);
+    comparator(PtrToStr, length.NumberOfLines, CommandFile, command, label);
 
-    size_t NumbOfComs = command[2] + 3;
+    size_t NumbOfComs = command[2] + default_commands_size;
 
     for (size_t counter = 0; counter < NumbOfComs; counter++) {
-        if (command[counter] = -1) {
-            comparator(PtrToStr, length.NumberOfLines, fp, command, label);
+        int BitForm = command[counter] & BITCOMM;
+        if (JUMP && command[counter + 1] == -1) {
+            comparator(PtrToStr, length.NumberOfLines, CommandFile, command, label);
             break;
         }   
     }
-    for (size_t i = 0; i < 10; i++) {
-        printf("%d\t%s\n", label[i].addres, label[i].point);
-    }
-    fwrite(command, sizeof(int), NumbOfComs, fp);
-    fclose(fp);
-    
-    FILE* fp1 = fopen("../cm.bin", "rb");
-    int cm[NumbOfComs];
-    fread(cm, sizeof(int), NumbOfComs, fp1);
-    fclose(fp1);
-    for (size_t i = 0; i < NumbOfComs; i++) {
-        printf("%d\n", cm[i]);
-    }
-    printf("\n");
-
-    free(PtrToStr);
-    
-    #if defined(LINUX)
-        shmdt(command);
-    #else
-        free(command);
-    #endif // LINUX
-    free(label);
+    PrintOfAsm(label, command, CommandFile, NumbOfComs);
+    Destructor(label, command, PtrToStr);
 
     return 0;
 }
 
-int comparator(String* PtrToStr, size_t NumbOfLines, FILE* PtrToCm, int* command, labels* label) {
+int comparator(String* PtrToStr, size_t NumbOfLines, FILE* PtrToCm, int* command, label_t* label) {
 
-    #define DEF_CMD(name, numb, arg, ...)                                                                                 \
-        if (!strcmp(buffer, #name)) {                                                                                     \
-            command[NumbOfComs] = CMD_##name;                                                                             \
-            NumbOfComs++;                                                                                                 \
-            if(arg) {                                                                                                     \
-                if(sscanf(PtrToStr[counter].ptrtostr + strlen(#name), "%d", command + NumbOfComs))  {                     \
-                    command[NumbOfComs - 1] += immed;                                                                     \
-                } else if ((dbg = sscanf(PtrToStr[counter].ptrtostr + strlen(#name), "%s", buff)) != 0 && dbg != EOF) {   \
-                    if ((ptr = strchr(buff, ':')) != nullptr) {                                                           \
-                        command[NumbOfComs - 1] += immed;                                                                 \
-                        command[NumbOfComs] = label_check(buff, label, label_counter);                                    \
-                    } else if(buff[0] != 'R' || buff[2] != 'X' || (buff[1] - 'A') > 3) {                                  \
-                        command[NumbOfComs - 1] = REG_ERR;                                                                \
-                    } else {                                                                                              \
-                    command[NumbOfComs - 1] += regis;                                                                     \
-                    command[NumbOfComs] = buff[1] - 'A';                                                                  \
-                }                                                                                                         \
-            }                                                                                                             \
-                NumbOfComs++;                                                                                             \
-            }                                                                                                             \
-        } else if ((ptr = strchr(buffer, ':')) != nullptr) {                                                              \
-            strcpy(label[label_counter].point, buffer);                                                                   \
-            label[label_counter].addres = NumbOfComs - 3;                                                                 \
-            label_counter++;                                                                                              \
+    #define DEF_CMD(name, numb, arg, ...)                                                                                       \
+        if (!strcmp(buffer, #name)) {                                                                                           \
+            command[NumbOfComs] = CMD_##name;                                                                                   \
+            NumbOfComs++;                                                                                                       \
+            if(arg) {                                                                                                           \
+                if(sscanf(PtrToStr[counter].ptrtostr + strlen(#name), "%d", command + NumbOfComs))  {                           \
+                    command[NumbOfComs - 1] += immed;                                                                           \
+                } else if ((verify = sscanf(PtrToStr[counter].ptrtostr + strlen(#name), "%s", buff)) != 0 && verify != EOF) {   \
+                    if (strchr(buff, ':')) {                                                                                    \
+                        command[NumbOfComs - 1] += immed;                                                                       \
+                        command[NumbOfComs] = label_check(buff, label, label_counter);                                          \
+                    } else if(buff[0] != 'R' || buff[2] != 'X' || (buff[1] - 'A') > 3 || strlen(buff) > 3) {                    \
+                        command[NumbOfComs - 1] = REG_ERR;                                                                      \
+                    } else {                                                                                                    \
+                    command[NumbOfComs - 1] += regis;                                                                           \
+                    command[NumbOfComs] = buff[1] - 'A';                                                                        \
+                }                                                                                                               \
+            }                                                                                                                   \
+                NumbOfComs++;                                                                                                   \
+            }                                                                                                                   \
+        } else if (strchr(buffer, ':')) {                                                                                       \
+            strcpy(label[label_counter].point, buffer);                                                                         \
+            label[label_counter].addres = NumbOfComs - default_commands_size;                                                   \
+            label_counter++;                                                                                                    \
         } else
         
-    size_t label_counter = 0;
-
     char buff[100]   = {};
-    char *ptr        = 0;
 
-    size_t NumbOfComs = 3;
-    int dbg = 0;
+    size_t NumbOfComs = default_commands_size;
+    size_t label_counter = 0;
+    int verify = 0;
 
     command[0] = signature;
     command[1] = version;                                             
@@ -117,6 +92,12 @@ int comparator(String* PtrToStr, size_t NumbOfLines, FILE* PtrToCm, int* command
         if (buffer[0] == '\0') {
             sscanf(PtrToStr[++counter].ptrtostr, "%s", buffer);
         }
+        if (label_counter == default_label_size - 1) {
+            label = ResizeLabel(label);
+        } else if (label_counter == max_label_size - 1) {
+            printf(RED "Labels are full\n");
+        }
+        
         #include "dsl.h"
         /*else*/ {
             MyAssert(command[counter] == __INT_MAX__ && "Syntax error!", buffer);
@@ -126,12 +107,65 @@ int comparator(String* PtrToStr, size_t NumbOfLines, FILE* PtrToCm, int* command
             Error = -1;
         }   
     }
-    command[2] = NumbOfComs - 3;
+    command[2] = NumbOfComs - default_commands_size;
 
     return 0;
 }
 
-int label_check(char* buffer, labels* label, size_t label_counter) {
+void Destructor(label_t* label, int* command, String* PtrToStr) {
+    free(PtrToStr);
+    
+    #if defined(SHM)
+        shmdt(command);
+    #else
+        free(command);
+    #endif // SHM
+    free(label);
+}
+
+void PrintOfAsm(const label_t* label, const int* command, FILE* CommandFile, const size_t NumbOfComs) {
+    fwrite(command, sizeof(int), NumbOfComs, CommandFile);
+    fclose(CommandFile);
+    
+    FILE* fp1 = fopen("../cm.bin", "rb");
+    int FCommand[NumbOfComs];
+    fread(FCommand, sizeof(int), NumbOfComs, fp1);
+    fclose(fp1);
+
+    size_t counter = 0;
+    for (; counter < default_commands_size; counter++) {
+        printf("%d\t", FCommand[counter]);
+    }
+    printf("\n");
+    for (; counter < NumbOfComs; counter++) {
+        int BitForm = FCommand[counter] & BITCOMM;
+        if (BitForm == CMD_PUSH || BitForm == CMD_POP || JUMP) {
+            printf("%d  %d\n", FCommand[counter], FCommand[counter + 1]);
+            counter++;
+        }
+        else {
+            printf("%d\n", FCommand[counter]);
+        }
+    }
+    for (size_t i = 0; i < 10; i++) {
+        printf("%d\t%s\n", label[i].addres, label[i].point);
+    }
+}
+
+label_t* CtorLabel(label_t* label) {
+    label = (label_t*) calloc(default_label_size, sizeof(label_t));
+    for (size_t counter = 0; counter < default_label_size; counter++) {
+        label[counter].addres = default_label_adress;
+    }
+    return label;
+}
+
+label_t* ResizeLabel(label_t* label) {
+    label = (label_t*) realloc(label, sizeof(label_t) * resize_label_const * default_label_size);
+    return label;
+}
+
+int label_check(char* buffer, label_t* label, size_t label_counter) {
     for (size_t counter = 0; counter <= label_counter; counter++) {
         if (!strcmp(buffer, label[counter].point)) {
             return label[counter].addres;

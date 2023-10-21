@@ -16,7 +16,7 @@ void SPUCtor(SPU_t* proc, FILE* PtrToCm) {
     proc->NumbOfComs = check[2];
     proc->CurrentCommand = 0;
     
-    #if defined(LINUX)
+    #if defined(SHM)
         key_t key = ftok(PathToCm, proj_id);
         size_t size = sizeof(elem_t) * (proc->NumbOfComs + 3);
         int shm_id = shmget(key, size, 0666 | IPC_CREAT |IPC_EXCL);
@@ -28,7 +28,7 @@ void SPUCtor(SPU_t* proc, FILE* PtrToCm) {
         size_t size = proc->NumbOfComs;
         proc->command = (elem_t*) calloc(size, sizeof(elem_t));
         fread(proc->command, sizeof(int), proc->NumbOfComs, PtrToCm);
-    #endif // LINUX
+    #endif // SHM
     
     STACK_CTOR(&proc->stk);
     for (size_t counter = 0; counter < 4; counter++) {
@@ -46,11 +46,11 @@ void SPUDtor(SPU_t* proc) {
         proc->command[counter] = POISON;
     }
     proc->NumbOfComs = POISON;
-    #if defined(LINUX)
+    #if defined(SHM)
         shmdt(proc->command);
     #else
         free(proc->command);
-    #endif // LINUX
+    #endif // SHM
     proc->command = nullptr;
     StackDtor(&proc->stk);
     proc = nullptr;
