@@ -12,6 +12,6 @@ int main(int argc, char* argv[]) {
         printf(RED "You entered too many names of files\n");
     }
     
-    assembly(argv[2], argv[1]);
+    RunAssembler(argv[2], argv[1]);
     return Error;
 }

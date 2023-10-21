@@ -4,7 +4,7 @@
 #include "types.h"
                                                       
 
-char   *InputBuffer(const char *FileName, Lengths *Length);
+char   *ReadFileToBuffer(const char *FileName, Lengths *Length);
 void InputPtrToBuffer(String *PtrToLine, Lengths *Length, char *Buffer);
 
 #endif

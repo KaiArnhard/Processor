@@ -3,7 +3,7 @@
 #include <cstring>
 
 
-char *InputBuffer (const char *FileName, Lengths *Length)
+char *ReadFileToBuffer(const char *FileName, Lengths *Length)
 {
 
     struct stat statistic = {};

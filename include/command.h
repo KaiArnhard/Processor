@@ -7,7 +7,7 @@
 
     #include <sys/ipc.h>
     #include <sys/shm.h>
-    const int proj_id = 1;
+    const int ProjId = 1;
 
 #endif // LINUX
 
@@ -18,7 +18,7 @@
 #define BLUE   "\e[0;34m"
 
 #define MyAssert(condition, command)                                                                                       \
-    ((bool) (condition) ? void (0) : my_assertion_failed(#condition, command, __FILE__, __PRETTY_FUNCTION__, __LINE__))    \
+    ((bool) (condition) ? void (0) : MyAssertionFailed(#condition, command, __FILE__, __PRETTY_FUNCTION__, __LINE__))    \
 
 #define DEF_CMD(name, numb, ...)    \
     CMD_##name = numb,
@@ -39,15 +39,15 @@ enum POP_PUSH_CODES {
 };
 
 struct label_t {
-    char point[100] = { };
-    int addres = -1;
+    char point[100];
+    int addres;
 };
 
-static const size_t resize_label_const    =  2;
-static const size_t max_label_size        =  20;
-static const size_t default_label_size    =  10;
-static const int default_label_adress     = -1;
-static const size_t default_commands_size =  3;
+static const size_t ResizeLabelConst    =  2;
+static const size_t MaxLabelSize        =  20;
+static const size_t DefaultLabelSize    =  10;
+static const int DefaultLabelAdress     = -1;
+static const size_t DefaultCommandsSize =  3;
 
 static int Error = 0;
 static const u_char REG_ERR = -1;
@@ -58,17 +58,22 @@ static const int version   = 3;
 static const size_t immed = 1 << 5; //32
 static const size_t regis = 1 << 6; //64
 
-void my_assertion_failed(const char* condition, const char* command, const char* file, const char* function, const int line);
+#if defined(SHM)
+    int* ShmCtor(char *PathToCm, Lengths* length);
+#endif // SHM
 
-int assembly(const char* PathToCm, const char* PathToAsm);
+
+void MyAssertionFailed(const char* condition, const char* command, const char* file, const char* function, const int line);
+
+int RunAssembler(const char* PathToCm, const char* PathToAsm);
 int disassembly(const char* DisAsmName, const char* CmName);
-int comparator(String* PtrToStr, size_t NumbOfLines, FILE* PtrToCm, int* commands, label_t* label);
+int Comparator(String* PtrToStr, size_t NumbOfLines, FILE* PtrToCm, int* commands, label_t* label);
 
 void PrintOfAsm(const label_t* label, const int* command, FILE* CommandFile, const size_t NumbOfComs);
 void Destructor(label_t* label, int* command, String* PtrToStr);
 
 label_t* CtorLabel(label_t* label);
 label_t* ResizeLabel(label_t* label);
-int label_check(char* buffer, label_t* label, size_t label_counter);
+int LabelCheck(char* buffer, label_t* label, size_t LabelCounter);
 
 #endif // COMMAND_H
