@@ -2,6 +2,7 @@
 #include <cstring>
 #include "command.h"
 #include "FileInput.h"
+#include "asm.h"
 
 int RunAssembler(const char* PathToCm, const char* PathToAsm) {
     FILE* CommandFile = fopen(PathToCm, "wb");
@@ -19,23 +20,23 @@ int RunAssembler(const char* PathToCm, const char* PathToAsm) {
     #if defined(SHM)
         int *command = ShmCtor(PathToCm, &length);
     #else
-        int* command = (int*) calloc(length.NumberOfCommands + 3, sizeof(int));
+        int* command = (int*) calloc(length.NumberOfCommands, sizeof(int));
     #endif // SHM
 
     label_t* label = nullptr;
     label = CtorLabel(label);
     assert(label != nullptr && "Pointer to label is null");
 
-    size_t NumbOfComs = Comparator(PtrToStr, length.NumberOfLines, CommandFile, command, label);
+    Comparator(PtrToStr, length.NumberOfLines, CommandFile, command, label);
 
-    for (size_t counter = 0; counter < NumbOfComs; counter++) {
+    for (size_t counter = 0; counter < length.NumberOfCommands; counter++) {
         int BitForm = command[counter] & BITCOMM;
         if (JUMP && command[counter + 1] == -1) {
             Comparator(PtrToStr, length.NumberOfLines, CommandFile, command, label);
             break;
         }   
     }
-    InputAsmToFile(label, command, CommandFile, NumbOfComs);
+    InputAsmToFile(label, command, CommandFile, length.NumberOfCommands);
     Destructor(label, command, PtrToStr);
 
     return 0;
@@ -128,14 +129,20 @@ void InputAsmToFile(const label_t* label, const int* command, FILE* CommandFile,
     fwrite(&version, sizeof(int), 1, CommandFile);
     fwrite(&NumbOfComs, sizeof(int), 1, CommandFile);
     fwrite(command, sizeof(int), NumbOfComs, CommandFile);
+
+    //debug print
+    DebugPrintOfAsm(label, command, CommandFile, NumbOfComs);    
+   
+}
+
+void DebugPrintOfAsm(const label_t* label, const int* command, FILE* CommandFile, const size_t NumbOfComs) {
     fclose(CommandFile);
-    
     FILE* fp1 = fopen("../cm.bin", "rb");
     int FCommand[NumbOfComs + 3];
     fread(FCommand, sizeof(int), NumbOfComs, fp1);
     fclose(fp1);
-
     size_t counter = 0;
+
     for (; counter < 3; counter++) {
         printf("%d\t", FCommand[counter]);
     }

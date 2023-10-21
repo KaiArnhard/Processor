@@ -38,18 +38,7 @@ enum POP_PUSH_CODES {
     IDENTIF = 7  << 5
 };
 
-struct label_t {
-    char point[100];
-    int addres;
-};
-
-static const size_t ResizeLabelConst    =  2;
-static const size_t MaxLabelSize        =  20;
-static const size_t DefaultLabelSize    =  10;
-static const int DefaultLabelAdress     = -1;
-
 static int Error = 0;
-static const u_char REG_ERR = -1;
 
 static const int signature = *((int*) "KLEO");
 static const int version   = 3;
@@ -63,16 +52,5 @@ static const size_t regis = 1 << 6; //64
 
 
 void MyAssertionFailed(const char* condition, const char* command, const char* file, const char* function, const int line);
-
-int RunAssembler(const char* PathToCm, const char* PathToAsm);
-int disassembly(const char* DisAsmName, const char* CmName);
-int Comparator(String* PtrToStr, size_t NumbOfLines, FILE* PtrToCm, int* commands, label_t* label);
-
-void InputAsmToFile(const label_t* label, const int* command, FILE* CommandFile, const size_t NumbOfComs);
-void Destructor(label_t* label, int* command, String* PtrToStr);
-
-label_t* CtorLabel(label_t* label);
-label_t* ResizeLabel(label_t* label);
-int LabelCheck(char* buffer, label_t* label, size_t LabelCounter);
 
 #endif // COMMAND_H
