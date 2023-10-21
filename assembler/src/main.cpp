@@ -1,6 +1,6 @@
+#include <cstring>
 #include "command.h"
 #include "FileInput.h"
-#include <cstring>
 
 int main(int argc, char* argv[]) {
 

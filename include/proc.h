@@ -1,8 +1,8 @@
 #if !defined(PROC_H)
 #define PROC_H
 
-#include "stack.h"
 #include <cmath>
+#include "stack.h"
 
 struct SPU_t {
     elem_t Register[4];

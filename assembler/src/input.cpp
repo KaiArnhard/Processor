@@ -1,7 +1,6 @@
+#include <cstring>
 #include "command.h"
 #include "FileInput.h"
-#include <cstring>
-
 
 char *ReadFileToBuffer(const char *FileName, Lengths *Length)
 {

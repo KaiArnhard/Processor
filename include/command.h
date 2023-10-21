@@ -1,8 +1,6 @@
 #if !defined(COMMAND_H)
 #define COMMAND_H
 
-#include "types.h"
-
 #if defined(LINUX)
 
     #include <sys/ipc.h>
@@ -10,6 +8,8 @@
     const int ProjId = 1;
 
 #endif // LINUX
+
+#include "types.h"
 
 #define RED    "\033[0;31m"
 #define GREEN  "\e[0;32m"
@@ -47,7 +47,6 @@ static const size_t ResizeLabelConst    =  2;
 static const size_t MaxLabelSize        =  20;
 static const size_t DefaultLabelSize    =  10;
 static const int DefaultLabelAdress     = -1;
-static const size_t DefaultCommandsSize =  3;
 
 static int Error = 0;
 static const u_char REG_ERR = -1;
@@ -69,7 +68,7 @@ int RunAssembler(const char* PathToCm, const char* PathToAsm);
 int disassembly(const char* DisAsmName, const char* CmName);
 int Comparator(String* PtrToStr, size_t NumbOfLines, FILE* PtrToCm, int* commands, label_t* label);
 
-void PrintOfAsm(const label_t* label, const int* command, FILE* CommandFile, const size_t NumbOfComs);
+void InputAsmToFile(const label_t* label, const int* command, FILE* CommandFile, const size_t NumbOfComs);
 void Destructor(label_t* label, int* command, String* PtrToStr);
 
 label_t* CtorLabel(label_t* label);

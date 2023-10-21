@@ -1,7 +1,7 @@
 #include <cstdio>
+#include <cstring>
 #include "command.h"
 #include "FileInput.h"
-#include <cstring>
 
 int RunAssembler(const char* PathToCm, const char* PathToAsm) {
     FILE* CommandFile = fopen(PathToCm, "wb");
@@ -26,9 +26,7 @@ int RunAssembler(const char* PathToCm, const char* PathToAsm) {
     label = CtorLabel(label);
     assert(label != nullptr && "Pointer to label is null");
 
-    Comparator(PtrToStr, length.NumberOfLines, CommandFile, command, label);
-
-    size_t NumbOfComs = command[2] + DefaultCommandsSize;
+    size_t NumbOfComs = Comparator(PtrToStr, length.NumberOfLines, CommandFile, command, label);
 
     for (size_t counter = 0; counter < NumbOfComs; counter++) {
         int BitForm = command[counter] & BITCOMM;
@@ -37,7 +35,7 @@ int RunAssembler(const char* PathToCm, const char* PathToAsm) {
             break;
         }   
     }
-    PrintOfAsm(label, command, CommandFile, NumbOfComs);
+    InputAsmToFile(label, command, CommandFile, NumbOfComs);
     Destructor(label, command, PtrToStr);
 
     return 0;
@@ -67,18 +65,15 @@ int Comparator(String* PtrToStr, size_t NumbOfLines, FILE* PtrToCm, int* command
             }                                                                                                                               \
         } else if (strchr(StrCommand, ':')) {                                                                                               \
             strcpy(label[LabelCounter].point, StrCommand);                                                                                  \
-            label[LabelCounter].addres = NumbOfComs - DefaultCommandsSize;                                                                  \
+            label[LabelCounter].addres = NumbOfComs;                                                                                        \
             LabelCounter++;                                                                                                                 \
         } else
         
-    char StrArgument[100]   = {};
+    char StrArgument[100] = {};
 
-    size_t NumbOfComs = DefaultCommandsSize;
+    size_t NumbOfComs   = 0;
     size_t LabelCounter = 0;
-    int verify = 0;
-
-    command[0] = signature;
-    command[1] = version;                                             
+    int verify          = 0;                                             
     
     for (size_t counter = 0; counter < NumbOfLines; counter++) {
         char StrCommand[100] = {};
@@ -102,9 +97,8 @@ int Comparator(String* PtrToStr, size_t NumbOfLines, FILE* PtrToCm, int* command
             Error = -1;
         }   
     }
-    command[2] = NumbOfComs - DefaultCommandsSize;
 
-    return 0;
+    return NumbOfComs;
 }
 
 #if defined(SHM)
@@ -121,7 +115,6 @@ int Comparator(String* PtrToStr, size_t NumbOfLines, FILE* PtrToCm, int* command
 
 void Destructor(label_t* label, int* command, String* PtrToStr) {
     free(PtrToStr);
-    
     #if defined(SHM)
         shmdt(command);
     #else
@@ -130,17 +123,20 @@ void Destructor(label_t* label, int* command, String* PtrToStr) {
     free(label);
 }
 
-void PrintOfAsm(const label_t* label, const int* command, FILE* CommandFile, const size_t NumbOfComs) {
+void InputAsmToFile(const label_t* label, const int* command, FILE* CommandFile, const size_t NumbOfComs) {
+    fwrite(&signature, sizeof(int), 1, CommandFile);
+    fwrite(&version, sizeof(int), 1, CommandFile);
+    fwrite(&NumbOfComs, sizeof(int), 1, CommandFile);
     fwrite(command, sizeof(int), NumbOfComs, CommandFile);
     fclose(CommandFile);
     
     FILE* fp1 = fopen("../cm.bin", "rb");
-    int FCommand[NumbOfComs];
+    int FCommand[NumbOfComs + 3];
     fread(FCommand, sizeof(int), NumbOfComs, fp1);
     fclose(fp1);
 
     size_t counter = 0;
-    for (; counter < DefaultCommandsSize; counter++) {
+    for (; counter < 3; counter++) {
         printf("%d\t", FCommand[counter]);
     }
     printf("\n");
@@ -154,6 +150,7 @@ void PrintOfAsm(const label_t* label, const int* command, FILE* CommandFile, con
             printf("%d\n", FCommand[counter]);
         }
     }
+    printf("\n");
     for (size_t i = 0; i < 10; i++) {
         printf("%d\t%s\n", label[i].addres, label[i].point);
     }
