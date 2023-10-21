@@ -1,3 +1,17 @@
+#define MAKE_COND_JUMP(name, count, cond)                           \
+    if (tmp == -1) {                                                \
+        MyAssert(tmp != -1 && "You entered wrong label", "pampam"); \
+        Error = -1;                                                 \
+    } else if(CMD_##name == CMD_JMP) {                              \
+        jump(proc, tmp);                                            \
+    } else if(proc->Register[1] cond count) {                       \
+        jump(proc, tmp);                                            \
+    } else {                                                        \
+        proc->CurrentCommand++;                                     \
+    }
+    
+     
+
 DEF_CMD(HLT, -1, 0, 
                     printf("\nProgramm ended succesfully\n");
                     return Error;
@@ -50,11 +64,38 @@ DEF_CMD(OUT, 10, 0,
                     out(&proc->stk);)
 DEF_CMD(JMP, 11, 1, 
                     tmp = proc->command[++proc->CurrentCommand];
-                    if (tmp == -1) {
-                        MyAssert(tmp != -1 && "You entered wrong label", "pampam");
-                        Error = -1;
-                    } else {
-                    jump(proc, tmp);
-                    })
+                    MAKE_COND_JUMP(JMP, 0, ==)
+                    )
+DEF_CMD(JA, 12, 1, 
+                    tmp = proc->command[++proc->CurrentCommand];
+                    StackPop(&proc->stk, &tmp1);
+                    MAKE_COND_JUMP(JA, tmp1, >)
+                    )
+DEF_CMD(JAE, 13, 1, 
+                    tmp = proc->command[++proc->CurrentCommand];
+                    StackPop(&proc->stk, &tmp1);
+                    MAKE_COND_JUMP(JAE, tmp1, >=)
+                    )
+DEF_CMD(JB, 14, 1, 
+                    tmp = proc->command[++proc->CurrentCommand];
+                    StackPop(&proc->stk, &tmp1);
+                    MAKE_COND_JUMP(JB, tmp1, <)
+                    )
+DEF_CMD(JBE, 15, 1, 
+                    tmp = proc->command[++proc->CurrentCommand];
+                    StackPop(&proc->stk, &tmp1);
+                    MAKE_COND_JUMP(JBE, tmp1, <=)
+                    )
+DEF_CMD(JE, 16, 1, 
+                    tmp = proc->command[++proc->CurrentCommand];
+                    StackPop(&proc->stk, &tmp1);
+                    MAKE_COND_JUMP(JE, tmp1, ==)
+                    )
+
+DEF_CMD(JNE, 17, 1, 
+                    tmp = proc->command[++proc->CurrentCommand];
+                    StackPop(&proc->stk, &tmp1);
+                    MAKE_COND_JUMP(JNE, tmp1, !=)
+                    )
 
 #include "dsl_undef.h"

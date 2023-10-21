@@ -175,12 +175,13 @@ size_t jump(SPU_t* proc, size_t tmp) {
 int VirtualMachine(SPU_t* proc, FILE* PtrToCm) {
 
     #define DEF_CMD(name, numb, arg, code)  \
-    case (CMD_##name & BITCOMM):            \
-        code                                \
-    break;                                  \
+        case (CMD_##name & BITCOMM):        \
+            code                            \
+        break;
     
 
     int tmp      = 0;
+    int tmp1     = 0;
     char symbol  = 0;
 
     for (size_t i = 0; i < proc->NumbOfComs; i++) {
@@ -191,9 +192,9 @@ int VirtualMachine(SPU_t* proc, FILE* PtrToCm) {
         SPU_DUMP(proc);
         switch (proc->command[proc->CurrentCommand] & BITCOMM) {
         #include "dsl.h"
-        default:
-            MyAssert(1 && "SYNTAX ERROR!", (char*) &(proc->command[proc->CurrentCommand]));
-            Error = -1;
+            default:
+                MyAssert(1 && "SYNTAX ERROR!", (char*) &(proc->command[proc->CurrentCommand]));
+                Error = -1;
             break;
         }
     }

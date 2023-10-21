@@ -29,8 +29,8 @@ enum command_t {
 #undef DEF_CMD
 
 enum POP_PUSH_CODES {
-    BITCOMM = 15 << 0,
-    IDENTIF = 15 << 4
+    BITCOMM = (15 << 0) + (1 << 4),
+    IDENTIF = 7  << 5
 };
 
 struct labels {
@@ -38,14 +38,14 @@ struct labels {
     int addres = -1;
 };
 
-
+static const size_t default_label_size = 10;
 static int Error = 0;
 static const u_char REG_ERR = -1;
 static const int signature = *((int*) "KLEO");
-static const int version   = 2;
+static const int version   = 3;
 
-static const size_t immed = 1 << 4; //16
-static const size_t regis = 1 << 5; //32
+static const size_t immed = 1 << 5; //32
+static const size_t regis = 1 << 6; //64
 
 void my_assertion_failed(const char* condition, const char* command, const char* file, const char* function, const int line);
 

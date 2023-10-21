@@ -28,8 +28,12 @@ int assembly(const char* PathToCm, const char* PathToAsm) {
         int* command = (int*) calloc(length.NumberOfCommands + 3, sizeof(int));
     #endif // LINUX
 
-    labels label[10];
+    labels* label;
 
+    label = (labels*) calloc(default_label_size, sizeof(labels));
+    for (size_t counter = 0; counter < default_label_size; counter++) {
+        label[counter].addres = -1;
+    }
     comparator(PtrToStr, length.NumberOfLines, fp, command, label);
 
     size_t NumbOfComs = command[2] + 3;
@@ -40,7 +44,9 @@ int assembly(const char* PathToCm, const char* PathToAsm) {
             break;
         }   
     }
-
+    for (size_t i = 0; i < 10; i++) {
+        printf("%d\t%s\n", label[i].addres, label[i].point);
+    }
     fwrite(command, sizeof(int), NumbOfComs, fp);
     fclose(fp);
     
@@ -60,6 +66,7 @@ int assembly(const char* PathToCm, const char* PathToAsm) {
     #else
         free(command);
     #endif // LINUX
+    free(label);
 
     return 0;
 }
@@ -121,10 +128,6 @@ int comparator(String* PtrToStr, size_t NumbOfLines, FILE* PtrToCm, int* command
     }
     command[2] = NumbOfComs - 3;
 
-    for (size_t i = 0; i < 10; i++) {
-        printf("%d\t%s\n", label[i].addres, label[i].point);
-    }
-    
     return 0;
 }
 
