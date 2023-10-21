@@ -106,6 +106,7 @@ int Comparator(String* PtrToStr, size_t NumbOfLines, FILE* PtrToCm, int* command
 
     return 0;
 }
+
 #if defined(SHM)
     int* ShmCtor(char *PathToCm, Lengths* length) {
         key_t key = ftok(PathToCm, ProjId);
@@ -117,8 +118,6 @@ int Comparator(String* PtrToStr, size_t NumbOfLines, FILE* PtrToCm, int* command
         return (int*) shmat(ShmId, nullptr, 0);
     }
 #endif // SHM
-
-
 
 void Destructor(label_t* label, int* command, String* PtrToStr) {
     free(PtrToStr);
