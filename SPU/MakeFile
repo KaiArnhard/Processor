@@ -1,0 +1,15 @@
+CXX = g++
+CFLAGS  = -I  ../include
+CFLAGS1 = -I ../include -c
+all: proc
+
+proc: main.o ProcFunctions.o StackFunctions.o
+	$(CXX) $(CFLAGS) obj/main.o obj/ProcFunctions.o obj/StackFunctions.o -o proc
+main.o: src/main.cpp 
+	$(CXX) $(CFLAGS1) src/main.cpp -o obj/main.o
+ProcFunctions.o: src/ProcFunctions.cpp
+	$(CXX) $(CFLAGS1) src/ProcFunctions.cpp -o obj/ProcFunctions.o
+StackFunctions.o: src/StackFunctions.cpp
+	$(CXX) $(CFLAGS1) src/StackFunctions.cpp -o obj/StackFunctions.o
+clean:
+	rm -rf *.o proc
