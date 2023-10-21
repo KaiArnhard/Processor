@@ -4,7 +4,7 @@
         Error = -1;                                                 \
     } else if(CMD_##name == CMD_JMP) {                              \
         jump(proc, tmp);                                            \
-    } else if(proc->Register[1] cond count) {                       \
+    } else if(count cond proc->Register[1]) {                       \
         jump(proc, tmp);                                            \
     } else {                                                        \
         proc->CurrentCommand++;                                     \
