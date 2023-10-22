@@ -20,7 +20,7 @@ int Comparator(String* PtrToStr, size_t NumbOfLines, FILE* PtrToCm, int* command
 
 int InputStrCommand(String* Ptr2Str, char* StrCommand, size_t counter);
 
-void MakeArgumentFromStr(char *StrArgument, label_t* label, int* command, const int NumbOfComs, const int LabelCounter);
+void MakeIntArgFromStrArg(char *StrArgument, label_t* label, int* command, const int NumbOfComs, const int LabelCounter);
 
 void InputAsmToFile(const label_t* label, const int* command, FILE* CommandFile, const size_t NumbOfComs);
 void DbgPrintOfAsmedFile(const label_t* label, FILE* CommandFile, const size_t NumbOfComs);

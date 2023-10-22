@@ -51,7 +51,7 @@ int Comparator(String* PtrToStr, size_t NumbOfLines, FILE* PtrToCm, int* command
                     command[NumbOfComs - 1] += immed;                                               \
                 } else {                                                                            \
                     sscanf(PtrToStr[counter].str + strlen(#name), "%s", StrArgument);               \
-                    MakeArgumentFromStr(StrArgument, label, command, NumbOfComs, LabelCounter);     \
+                    MakeIntArgFromStrArg(StrArgument, label, command, NumbOfComs, LabelCounter);    \
                 }                                                                                   \
                 NumbOfComs++;                                                                       \
             }                                                                                       \
@@ -59,7 +59,7 @@ int Comparator(String* PtrToStr, size_t NumbOfLines, FILE* PtrToCm, int* command
             MakeLabel(label, StrCommand, LabelCounter, NumbOfComs);                                 \
         } else
         
-    char StrCommand[20]  = {};
+    char StrCommand[100]  = {};
     char StrArgument[100] = {};
 
     size_t NumbOfComs   = 0;
@@ -151,7 +151,7 @@ void DbgPrintOfAsmedFile(const label_t* label, FILE* CommandFile, const size_t N
     }
 }
 
-void MakeArgumentFromStr(char *StrArgument, label_t* label, int* command, const int NumbOfComs, const int LabelCounter) {
+void MakeIntArgFromStrArg(char *StrArgument, label_t* label, int* command, const int NumbOfComs, const int LabelCounter) {
     if (strchr(StrArgument, ':')) {
         command[NumbOfComs - 1] += immed;
         command[NumbOfComs] = LabelCheck(StrArgument, label, LabelCounter);
