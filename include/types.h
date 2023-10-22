@@ -4,11 +4,10 @@
 #include <ctype.h>
 #include <cstdlib>
 #include <cstdio>
+#include <cstring>
 #include <assert.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-
-static const size_t SizeOf1Command = 5;
 
 struct String
 {

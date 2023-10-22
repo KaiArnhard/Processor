@@ -4,7 +4,7 @@
 void SPUCtor(SPU_t* proc, FILE* PtrToCm) {
     size_t check[3] = {};
     
-    fread(check, sizeof(int), 3, PtrToCm);
+    fread(check, sizeof(size_t), 3, PtrToCm);
 
     if (check[0] != signature) {
         printf(RED "Wrong signature! Your signature: %d\n", check[0]);

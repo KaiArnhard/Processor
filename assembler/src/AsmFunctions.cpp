@@ -1,5 +1,4 @@
 #include <cstdio>
-#include <cstring>
 #include "command.h"
 #include "FileInput.h"
 #include "asm.h"
@@ -25,14 +24,13 @@ int RunAssembler(const char* PathToCm, const char* PathToAsm) {
 
     label_t* label = nullptr;
     label = CtorLabel(label);
-    assert(label != nullptr && "Pointer to label is null");
 
-    Comparator(Ptr2Str, length.NumberOfLines, CommandFile, command, label);
+    length.NumberOfCommands = Comparator(Ptr2Str, length.NumberOfLines, CommandFile, command, label);
 
     for (size_t counter = 0; counter < length.NumberOfCommands; counter++) {
         int BitForm = command[counter] & BITCOMM;
-        if (JUMP && command[counter + 1] == -1) {
-            Comparator(Ptr2Str, length.NumberOfLines, CommandFile, command, label);
+        if (JUMP && command[counter + 1] == DefaultLabelAdress) {
+            length.NumberOfCommands = Comparator(Ptr2Str, length.NumberOfLines, CommandFile, command, label);
             break;
         }   
     }
@@ -49,7 +47,7 @@ int Comparator(String* PtrToStr, size_t NumbOfLines, FILE* PtrToCm, int* command
             command[NumbOfComs] = CMD_##name;                                                       \
             NumbOfComs++;                                                                           \
             if(arg) {                                                                               \
-                if(sscanf(PtrToStr[counter].str + strlen(#name), "%d", command + NumbOfComs))  {    \
+                if(sscanf(PtrToStr[counter].str + strlen(#name), "%d", command + NumbOfComs)) {     \
                     command[NumbOfComs - 1] += immed;                                               \
                 } else {                                                                            \
                     sscanf(PtrToStr[counter].str + strlen(#name), "%s", StrArgument);               \
@@ -61,6 +59,7 @@ int Comparator(String* PtrToStr, size_t NumbOfLines, FILE* PtrToCm, int* command
             MakeLabel(label, StrCommand, LabelCounter, NumbOfComs);                                 \
         } else
         
+    char StrCommand[20]  = {};
     char StrArgument[100] = {};
 
     size_t NumbOfComs   = 0;
@@ -68,17 +67,8 @@ int Comparator(String* PtrToStr, size_t NumbOfLines, FILE* PtrToCm, int* command
     int verify          = 0;                                             
     
     for (size_t counter = 0; counter < NumbOfLines; counter++) {
-        char StrCommand[100] = {};
-        sscanf(PtrToStr[counter].str, "%s", StrCommand);
-        
-        if (StrCommand[0] == '\0') {
-            sscanf(PtrToStr[++counter].str, "%s", StrCommand);
-        }
-        if (LabelCounter == DefaultLabelSize - 1) {
-            label = ResizeLabel(label);
-        } else if (LabelCounter == MaxLabelSize - 1) {
-            printf(RED "Labels are full\n");
-        }
+
+        counter = InputStrCommand(PtrToStr, StrCommand, counter);
         
         #include "dsl.h"
         /*else*/ {
@@ -89,7 +79,6 @@ int Comparator(String* PtrToStr, size_t NumbOfLines, FILE* PtrToCm, int* command
             Error = -1;
         }   
     }
-
     return NumbOfComs;
 }
 
@@ -115,41 +104,50 @@ void Destructor(label_t* label, int* command, String* PtrToStr) {
     free(label);
 }
 
+int InputStrCommand(String* Ptr2Str, char* StrCommand, size_t counter) {
+    sscanf(Ptr2Str[counter].str, "%s", StrCommand);
+        if (StrCommand[0] == '\0') {
+            sscanf(Ptr2Str[++counter].str, "%s", StrCommand);
+        }
+    return counter;
+}
+
 void InputAsmToFile(const label_t* label, const int* command, FILE* CommandFile, const size_t NumbOfComs) {
     size_t information[3] = {signature, version, NumbOfComs};
-    fwrite(information, sizeof(int), 3, CommandFile);
+
+    fwrite(information, sizeof(size_t), 3, CommandFile);
     fwrite(command, sizeof(int), NumbOfComs, CommandFile);
 
-    //debug print
-    DbgPrintOfAsmedFile(label, CommandFile, NumbOfComs);    
-   
+    DbgPrintOfAsmedFile(label, CommandFile, NumbOfComs);             
 }
 
 void DbgPrintOfAsmedFile(const label_t* label, FILE* CommandFile, const size_t NumbOfComs) {
     fclose(CommandFile);
     FILE* fp1 = fopen("../cm.bin", "rb");
-    int FCommand[NumbOfComs + 3];
-    fread(FCommand, sizeof(int), NumbOfComs, fp1);
+    int command[NumbOfComs];
+    size_t information[3] = {};
+    
+    fread(information, sizeof(size_t), 3, fp1);
+    fread(command, sizeof(int), NumbOfComs, fp1);
     fclose(fp1);
-    size_t counter = 0;
 
-    for (; counter < 3; counter++) {
-        printf("%d\t", FCommand[counter]);
+    for (size_t counter = 0; counter < 3; counter++) {
+        printf("%d\t", information[counter]);
     }
     printf("\n");
-    for (; counter < NumbOfComs; counter++) {
-        int BitForm = FCommand[counter] & BITCOMM;
+    for (size_t counter = 0; counter < NumbOfComs; counter++) {
+        int BitForm = command[counter] & BITCOMM;
         if (BitForm == CMD_PUSH || BitForm == CMD_POP || JUMP) {
-            printf("%d  %d\n", FCommand[counter], FCommand[counter + 1]);
+            printf("%d  %d\n", command[counter], command[counter + 1]);
             counter++;
         }
         else {
-            printf("%d\n", FCommand[counter]);
+            printf("%d\n", command[counter]);
         }
     }
     printf("\n");
-    for (size_t i = 0; i < 10; i++) {
-        printf("%d\t%s\n", label[i].addres, label[i].point);
+    for (size_t i = 0; i < label->LabelSize; i++) {
+        printf("%d\t%s\n", label[i].DestAddres, label[i].point);
     }
 }
 
@@ -165,40 +163,27 @@ void MakeArgumentFromStr(char *StrArgument, label_t* label, int* command, const 
     }
 }
 
-int MakeLabel(label_t* label, char* NameOfLabel, size_t LabelCounter, size_t NumbOfComs) {
-    strcpy(label[LabelCounter].point, NameOfLabel);
-    label[LabelCounter].addres = NumbOfComs;
-    LabelCounter++;
-    return LabelCounter;
-}
-
-label_t* CtorLabel(label_t* label) {
-    label = (label_t*) calloc(DefaultLabelSize, sizeof(label_t));
-    for (size_t counter = 0; counter < DefaultLabelSize; counter++) {
-        label[counter].addres = DefaultLabelAdress;
-    }
-    return label;
-}
-
-label_t* ResizeLabel(label_t* label) {
-    label = (label_t*) realloc(label, sizeof(label_t) * ResizeLabelConst * DefaultLabelSize);
-    for (size_t counter = DefaultLabelSize; counter < ResizeLabelConst * DefaultLabelSize; counter++) {
-        label[counter].addres = -1;
-    }
-    
-    return label;
-}
-
-int LabelCheck(char* buffer, label_t* label, size_t LabelCounter) {
+int LabelCheck(char* NameOfLabel, label_t* label, size_t LabelCounter) {
     for (size_t counter = 0; counter <= LabelCounter; counter++) {
-        if (!strcmp(buffer, label[counter].point)) {
-            return label[counter].addres;
+        if (!strcmp(NameOfLabel, label[counter].point)) {
+            return label[counter].DestAddres;
         }
     }
-    return -1;
+    return DefaultLabelAdress;
 }
 
-
+int MakeLabel(label_t* label, char* NameOfLabel, size_t LabelCounter, size_t NumbOfComs) {
+    if (LabelCounter == DefaultLabelSize - 1) {
+            label = ResizeLabel(label);
+    } else if (LabelCounter == MaxLabelSize - 1) {
+        printf(RED "Labels are full\n");
+    } else {
+        strcpy(label[LabelCounter].point, NameOfLabel);
+        label[LabelCounter].DestAddres = NumbOfComs;
+        LabelCounter++;
+    }
+    return LabelCounter;
+}
 
 /*int disassembly(const char* DisAsmName, const char* CmName) {
     FILE* PtrToAsm = fopen(DisAsmName, "w");
