@@ -2,7 +2,7 @@
 #include "command.h"
 
 void SPUCtor(SPU_t* proc, FILE* PtrToCm) {
-    int check[3] = {};
+    size_t check[3] = {};
     
     fread(check, sizeof(int), 3, PtrToCm);
 

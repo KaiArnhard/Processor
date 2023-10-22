@@ -8,10 +8,12 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+static const size_t SizeOf1Command = 5;
+
 struct String
 {
-    char *ptrtostr   = 0;
-    int  lengthofstr = 0;
+    char *str        = 0;
+    int  LengthOfStr = 0;
 };
 struct Lengths
 {

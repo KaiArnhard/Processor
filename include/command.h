@@ -28,11 +28,6 @@ enum command_t {
 };
 #undef DEF_CMD
 
-
-#define JUMP                                                                                \
-    BitForm == CMD_JMP || BitForm == CMD_JA || BitForm == CMD_JAE ||                        \
-    BitForm == CMD_JB || BitForm == CMD_JBE || BitForm == CMD_JE || BitForm == CMD_JNE
-
 enum POP_PUSH_CODES {
     BITCOMM = (15 << 0) + (1 << 4),
     IDENTIF = 7  << 5
@@ -40,8 +35,8 @@ enum POP_PUSH_CODES {
 
 static int Error = 0;
 
-static const int signature = *((int*) "KLEO");
-static const int version   = 3;
+static const size_t signature = *((int*) "KLEO");
+static const size_t version   = 3;
 
 static const size_t immed = 1 << 5; //32
 static const size_t regis = 1 << 6; //64

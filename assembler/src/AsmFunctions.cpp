@@ -8,14 +8,14 @@ int RunAssembler(const char* PathToCm, const char* PathToAsm) {
     FILE* CommandFile = fopen(PathToCm, "wb");
     assert(CommandFile != nullptr);
 
-    String* PtrToStr = nullptr;
+    String* Ptr2Str = nullptr;
     Lengths length = {};
 
     char* buffer = ReadFileToBuffer(PathToAsm, &length);
     
-    PtrToStr = (String*) calloc(length.NumberOfLines, sizeof(String));
+    Ptr2Str = (String*) calloc(length.NumberOfLines, sizeof(String));
     
-    InputPtrToBuffer(PtrToStr, &length, buffer);
+    InputPtrToBuffer(Ptr2Str, &length, buffer);
     
     #if defined(SHM)
         int *command = ShmCtor(PathToCm, &length);
@@ -27,47 +27,38 @@ int RunAssembler(const char* PathToCm, const char* PathToAsm) {
     label = CtorLabel(label);
     assert(label != nullptr && "Pointer to label is null");
 
-    Comparator(PtrToStr, length.NumberOfLines, CommandFile, command, label);
+    Comparator(Ptr2Str, length.NumberOfLines, CommandFile, command, label);
 
     for (size_t counter = 0; counter < length.NumberOfCommands; counter++) {
         int BitForm = command[counter] & BITCOMM;
         if (JUMP && command[counter + 1] == -1) {
-            Comparator(PtrToStr, length.NumberOfLines, CommandFile, command, label);
+            Comparator(Ptr2Str, length.NumberOfLines, CommandFile, command, label);
             break;
         }   
     }
     InputAsmToFile(label, command, CommandFile, length.NumberOfCommands);
-    Destructor(label, command, PtrToStr);
+    Destructor(label, command, Ptr2Str);
 
     return 0;
 }
 
 int Comparator(String* PtrToStr, size_t NumbOfLines, FILE* PtrToCm, int* command, label_t* label) {
 
-    #define DEF_CMD(name, numb, arg, ...)                                                                                                   \
-        if (!strcmp(StrCommand, #name)) {                                                                                                   \
-            command[NumbOfComs] = CMD_##name;                                                                                               \
-            NumbOfComs++;                                                                                                                   \
-            if(arg) {                                                                                                                       \
-                if(sscanf(PtrToStr[counter].ptrtostr + strlen(#name), "%d", command + NumbOfComs))  {                                       \
-                    command[NumbOfComs - 1] += immed;                                                                                       \
-                } else if ((verify = sscanf(PtrToStr[counter].ptrtostr + strlen(#name), "%s", StrArgument)) != 0 && verify != EOF) {        \
-                    if (strchr(StrArgument, ':')) {                                                                                         \
-                        command[NumbOfComs - 1] += immed;                                                                                   \
-                        command[NumbOfComs] = LabelCheck(StrArgument, label, LabelCounter);                                                 \
-                    } else if(StrArgument[0] != 'R' || StrArgument[2] != 'X' || (StrArgument[1] - 'A') > 3 || strlen(StrArgument) > 3) {    \
-                        command[NumbOfComs - 1] = REG_ERR;                                                                                  \
-                    } else {                                                                                                                \
-                        command[NumbOfComs - 1] += regis;                                                                                   \
-                        command[NumbOfComs] = StrArgument[1] - 'A';                                                                         \
-                }                                                                                                                           \
-            }                                                                                                                               \
-                NumbOfComs++;                                                                                                               \
-            }                                                                                                                               \
-        } else if (strchr(StrCommand, ':')) {                                                                                               \
-            strcpy(label[LabelCounter].point, StrCommand);                                                                                  \
-            label[LabelCounter].addres = NumbOfComs;                                                                                        \
-            LabelCounter++;                                                                                                                 \
+    #define DEF_CMD(name, numb, arg, ...)                                                           \
+        if (!strcmp(StrCommand, #name)) {                                                           \
+            command[NumbOfComs] = CMD_##name;                                                       \
+            NumbOfComs++;                                                                           \
+            if(arg) {                                                                               \
+                if(sscanf(PtrToStr[counter].str + strlen(#name), "%d", command + NumbOfComs))  {    \
+                    command[NumbOfComs - 1] += immed;                                               \
+                } else {                                                                            \
+                    sscanf(PtrToStr[counter].str + strlen(#name), "%s", StrArgument);               \
+                    MakeArgumentFromStr(StrArgument, label, command, NumbOfComs, LabelCounter);     \
+                }                                                                                   \
+                NumbOfComs++;                                                                       \
+            }                                                                                       \
+        } else if (strchr(StrCommand, ':')) {                                                       \
+            MakeLabel(label, StrCommand, LabelCounter, NumbOfComs);                                 \
         } else
         
     char StrArgument[100] = {};
@@ -78,10 +69,10 @@ int Comparator(String* PtrToStr, size_t NumbOfLines, FILE* PtrToCm, int* command
     
     for (size_t counter = 0; counter < NumbOfLines; counter++) {
         char StrCommand[100] = {};
-        sscanf(PtrToStr[counter].ptrtostr, "%s", StrCommand);
+        sscanf(PtrToStr[counter].str, "%s", StrCommand);
         
         if (StrCommand[0] == '\0') {
-            sscanf(PtrToStr[++counter].ptrtostr, "%s", StrCommand);
+            sscanf(PtrToStr[++counter].str, "%s", StrCommand);
         }
         if (LabelCounter == DefaultLabelSize - 1) {
             label = ResizeLabel(label);
@@ -125,17 +116,16 @@ void Destructor(label_t* label, int* command, String* PtrToStr) {
 }
 
 void InputAsmToFile(const label_t* label, const int* command, FILE* CommandFile, const size_t NumbOfComs) {
-    fwrite(&signature, sizeof(int), 1, CommandFile);
-    fwrite(&version, sizeof(int), 1, CommandFile);
-    fwrite(&NumbOfComs, sizeof(int), 1, CommandFile);
+    size_t information[3] = {signature, version, NumbOfComs};
+    fwrite(information, sizeof(int), 3, CommandFile);
     fwrite(command, sizeof(int), NumbOfComs, CommandFile);
 
     //debug print
-    DbgPrintOfAsmedFile(label, command, CommandFile, NumbOfComs);    
+    DbgPrintOfAsmedFile(label, CommandFile, NumbOfComs);    
    
 }
 
-void DbgPrintOfAsmedFile(const label_t* label, const int* command, FILE* CommandFile, const size_t NumbOfComs) {
+void DbgPrintOfAsmedFile(const label_t* label, FILE* CommandFile, const size_t NumbOfComs) {
     fclose(CommandFile);
     FILE* fp1 = fopen("../cm.bin", "rb");
     int FCommand[NumbOfComs + 3];
@@ -161,6 +151,25 @@ void DbgPrintOfAsmedFile(const label_t* label, const int* command, FILE* Command
     for (size_t i = 0; i < 10; i++) {
         printf("%d\t%s\n", label[i].addres, label[i].point);
     }
+}
+
+void MakeArgumentFromStr(char *StrArgument, label_t* label, int* command, const int NumbOfComs, const int LabelCounter) {
+    if (strchr(StrArgument, ':')) {
+        command[NumbOfComs - 1] += immed;
+        command[NumbOfComs] = LabelCheck(StrArgument, label, LabelCounter);
+    } else if(StrArgument[0] != 'R' || StrArgument[2] != 'X' || (StrArgument[1] - 'A') > 3 || strlen(StrArgument) > 3) {
+        command[NumbOfComs - 1]  = REG_ERR;
+    } else {
+        command[NumbOfComs - 1] += regis;
+        command[NumbOfComs] = StrArgument[1] - 'A';
+    }
+}
+
+int MakeLabel(label_t* label, char* NameOfLabel, size_t LabelCounter, size_t NumbOfComs) {
+    strcpy(label[LabelCounter].point, NameOfLabel);
+    label[LabelCounter].addres = NumbOfComs;
+    LabelCounter++;
+    return LabelCounter;
 }
 
 label_t* CtorLabel(label_t* label) {
