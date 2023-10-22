@@ -34,7 +34,7 @@ int RunAssembler(const char* PathToCm, const char* PathToAsm) {
             break;
         }   
     }
-    InputAsmToFile(label, command, CommandFile, length.NumberOfCommands);
+    InputCommsToFile(label, command, CommandFile, length.NumberOfCommands);
     Destructor(label, command, Ptr2Str);
 
     return 0;
@@ -51,16 +51,16 @@ int Comparator(String* PtrToStr, size_t NumbOfLines, FILE* PtrToCm, int* command
                     command[NumbOfComs - 1] += immed;                                               \
                 } else {                                                                            \
                     sscanf(PtrToStr[counter].str + strlen(#name), "%s", StrArgument);               \
-                    MakeIntArgFromStrArg(StrArgument, label, command, NumbOfComs, LabelCounter);    \
+                    CodingCommWithStrArg(StrArgument, label, command, NumbOfComs, LabelCounter);    \
                 }                                                                                   \
                 NumbOfComs++;                                                                       \
             }                                                                                       \
         } else if (strchr(StrCommand, ':')) {                                                       \
-            MakeLabel(label, StrCommand, LabelCounter, NumbOfComs);                                 \
+            LabelCounter = MakeLabel(label, StrCommand, LabelCounter, NumbOfComs);                  \
         } else
         
-    char StrCommand[100]  = {};
-    char StrArgument[100] = {};
+    char StrCommand[StrCommandSize]  = {};
+    char StrArgument[StrArgSize] = {};
 
     size_t NumbOfComs   = 0;
     size_t LabelCounter = 0;
@@ -94,14 +94,16 @@ int Comparator(String* PtrToStr, size_t NumbOfLines, FILE* PtrToCm, int* command
     }
 #endif // SHM
 
-void Destructor(label_t* label, int* command, String* PtrToStr) {
-    free(PtrToStr);
-    #if defined(SHM)
-        shmdt(command);
-    #else
-        free(command);
-    #endif // SHM
-    free(label);
+void CodingCommWithStrArg(char *StrArgument, label_t* label, int* command, const int NumbOfComs, const int LabelCounter) {
+    if (strchr(StrArgument, ':')) {
+        command[NumbOfComs - 1] += immed;
+        command[NumbOfComs] = LabelCheck(StrArgument, label, LabelCounter);
+    } else if(StrArgument[0] != 'R' || StrArgument[2] != 'X' || (StrArgument[1] - 'A') > 3 || strlen(StrArgument) > 3) {
+        command[NumbOfComs - 1]  = REG_ERR;
+    } else {
+        command[NumbOfComs - 1] += regis;
+        command[NumbOfComs] = StrArgument[1] - 'A';
+    }
 }
 
 int InputStrCommand(String* Ptr2Str, char* StrCommand, size_t counter) {
@@ -112,27 +114,27 @@ int InputStrCommand(String* Ptr2Str, char* StrCommand, size_t counter) {
     return counter;
 }
 
-void InputAsmToFile(const label_t* label, const int* command, FILE* CommandFile, const size_t NumbOfComs) {
-    size_t information[3] = {signature, version, NumbOfComs};
+void InputCommsToFile(const label_t* label, const int* command, FILE* CommandFile, const size_t NumbOfComs) {
+    size_t tmp[3] = {signature, version, NumbOfComs};
 
-    fwrite(information, sizeof(size_t), 3, CommandFile);
+    fwrite(tmp, sizeof(size_t), sizeof(tmp) / sizeof(size_t), CommandFile);
     fwrite(command, sizeof(int), NumbOfComs, CommandFile);
 
-    DbgPrintOfAsmedFile(label, CommandFile, NumbOfComs);             
+    PrintOfCommsFile(label, CommandFile, NumbOfComs);             
 }
 
-void DbgPrintOfAsmedFile(const label_t* label, FILE* CommandFile, const size_t NumbOfComs) {
+void PrintOfCommsFile(const label_t* label, FILE* CommandFile, const size_t NumbOfComs) {
     fclose(CommandFile);
     FILE* fp1 = fopen("../cm.bin", "rb");
     int command[NumbOfComs];
-    size_t information[3] = {};
+    size_t tmp[3] = {};
     
-    fread(information, sizeof(size_t), 3, fp1);
+    fread(tmp, sizeof(size_t), sizeof(tmp) / sizeof(size_t), fp1);
     fread(command, sizeof(int), NumbOfComs, fp1);
     fclose(fp1);
 
-    for (size_t counter = 0; counter < 3; counter++) {
-        printf("%d\t", information[counter]);
+    for (size_t counter = 0; counter < sizeof(tmp) / sizeof(size_t); counter++) {
+        printf("%d\t", tmp[counter]);
     }
     printf("\n");
     for (size_t counter = 0; counter < NumbOfComs; counter++) {
@@ -146,20 +148,8 @@ void DbgPrintOfAsmedFile(const label_t* label, FILE* CommandFile, const size_t N
         }
     }
     printf("\n");
-    for (size_t i = 0; i < label->LabelSize; i++) {
-        printf("%d\t%s\n", label[i].DestAddres, label[i].point);
-    }
-}
-
-void MakeIntArgFromStrArg(char *StrArgument, label_t* label, int* command, const int NumbOfComs, const int LabelCounter) {
-    if (strchr(StrArgument, ':')) {
-        command[NumbOfComs - 1] += immed;
-        command[NumbOfComs] = LabelCheck(StrArgument, label, LabelCounter);
-    } else if(StrArgument[0] != 'R' || StrArgument[2] != 'X' || (StrArgument[1] - 'A') > 3 || strlen(StrArgument) > 3) {
-        command[NumbOfComs - 1]  = REG_ERR;
-    } else {
-        command[NumbOfComs - 1] += regis;
-        command[NumbOfComs] = StrArgument[1] - 'A';
+    for (size_t counter = 0; counter < label->LabelSize; counter++) {
+        printf("%d  %s  %d\n", counter, label[counter].point, label[counter].DestAddres);
     }
 }
 
@@ -173,9 +163,9 @@ int LabelCheck(char* NameOfLabel, label_t* label, size_t LabelCounter) {
 }
 
 int MakeLabel(label_t* label, char* NameOfLabel, size_t LabelCounter, size_t NumbOfComs) {
-    if (LabelCounter == DefaultLabelSize - 1) {
+    if (LabelCounter >= label->LabelSize) {
             label = ResizeLabel(label);
-    } else if (LabelCounter == MaxLabelSize - 1) {
+    } else if (LabelCounter >= MaxLabelSize - 1) {
         printf(RED "Labels are full\n");
     } else {
         strcpy(label[LabelCounter].point, NameOfLabel);
@@ -183,6 +173,16 @@ int MakeLabel(label_t* label, char* NameOfLabel, size_t LabelCounter, size_t Num
         LabelCounter++;
     }
     return LabelCounter;
+}
+
+void Destructor(label_t* label, int* command, String* PtrToStr) {
+    #if defined(SHM)
+        shmdt(command);
+    #else
+        free(command);
+    #endif // SHM
+    free(PtrToStr);
+    free(label);
 }
 
 /*int disassembly(const char* DisAsmName, const char* CmName) {
