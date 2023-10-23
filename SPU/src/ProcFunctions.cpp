@@ -4,7 +4,7 @@
 void SPUCtor(SPU_t* proc, FILE* PtrToCm) {
     size_t check[3] = {};
     
-    fread(check, sizeof(size_t), 3, PtrToCm);
+    fread(check, sizeof(size_t), sizeof(check) / sizeof(size_t), PtrToCm);
 
     if (check[0] != signature) {
         printf(RED "Wrong signature! Your signature: %d\n", check[0]);
@@ -17,13 +17,7 @@ void SPUCtor(SPU_t* proc, FILE* PtrToCm) {
     proc->CurrentCommand = 0;
     
     #if defined(SHM)
-        key_t key = ftok(PathToCm, proj_id);
-        size_t size = sizeof(elem_t) * (proc->NumbOfComs + 3);
-        int shm_id = shmget(key, size, 0666 | IPC_CREAT |IPC_EXCL);
-        if (shm_id == -1) {
-            shm_id = shmget(key, size, 0666);
-        }
-        proc->command = (elem_t*) shmat(shm_id, nullptr, 0);
+        proc->command = SPUShmCtor();
     #else
         size_t size = proc->NumbOfComs;
         proc->command = (elem_t*) calloc(size, sizeof(elem_t));
@@ -31,16 +25,30 @@ void SPUCtor(SPU_t* proc, FILE* PtrToCm) {
     #endif // SHM
     
     STACK_CTOR(&proc->stk);
-    for (size_t counter = 0; counter < 4; counter++) {
-        proc->Register[0] = 0;
+    STACK_CTOR(&proc->SourceAddress);
+    for (size_t counter = 0; counter < NumbOfRegs; counter++) {
+        proc->Register[counter] = 0;
     }
     
 }
 
+#if defined(SHM)
+    elem_t* SPUShmCtor() {
+        key_t key = ftok(PathToCm, proj_id);
+        size_t size = sizeof(elem_t) * (proc->NumbOfComs + 3);
+        int shm_id = shmget(key, size, 0666 | IPC_CREAT |IPC_EXCL);
+        if (shm_id == -1) {
+            shm_id = shmget(key, size, 0666);
+        }
+        return (elem_t*) shmat(shm_id, nullptr, 0);
+    }
+#endif // SHM
+
+
 void SPUDtor(SPU_t* proc) {
     
-    for (size_t counter = 0; counter < 4; counter++) {
-        proc->Register[0] = 0;
+    for (size_t counter = 0; counter < NumbOfRegs; counter++) {
+        proc->Register[counter] = POISON;
     }
     for (size_t counter = 0; counter < proc->NumbOfComs; counter++) {
         proc->command[counter] = POISON;
@@ -60,7 +68,7 @@ void SPUDump(SPU_t* proc, const char* file, const char* function, size_t line) {
     PointerToDump = StackDump(&proc->stk, file, function, line);
     
     fprintf(PointerToDump, "\nAll registers \n");
-    for (size_t counter = 0; counter < 4; counter++) {
+    for (size_t counter = 0; counter < NumbOfRegs; counter++) {
         fprintf(PointerToDump, "%d\t", proc->Register[counter]);
     }
     fprintf(PointerToDump, "\n\n");
@@ -170,8 +178,8 @@ elem_t out(stack_t* stk) {
     return tmp;
 }
 
-size_t jump(SPU_t* proc, size_t tmp) {
-    proc->CurrentCommand = tmp - 1;
+size_t jump(SPU_t* proc, size_t DestAddress) {
+    proc->CurrentCommand = DestAddress - 1;
     return proc->CurrentCommand;
 }
 
@@ -179,6 +187,7 @@ int VirtualMachine(SPU_t* proc, FILE* PtrToCm) {
 
     #define DEF_CMD(name, numb, arg, code)  \
         case (CMD_##name & BITCOMM):        \
+            printf("%d\n", proc->CurrentCommand);                       \
             code                            \
         break;
     

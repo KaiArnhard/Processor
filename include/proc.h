@@ -4,10 +4,13 @@
 #include <cmath>
 #include "stack.h"
 
+static const size_t NumbOfRegs = 4;
+
 struct SPU_t {
-    elem_t Register[4];
+    elem_t Register[NumbOfRegs];
 
     stack_t stk;
+    stack_t SourceAddress;
     
     size_t NumbOfComs;
     size_t CurrentCommand;
@@ -17,6 +20,10 @@ struct SPU_t {
 #define SPU_DUMP(proc) {                                       \
     SPUDump(proc, __FILE__, __PRETTY_FUNCTION__, __LINE__);    \
 }
+
+#if defined(SHM)
+    elem_t* SPUShmCtor();
+#endif // SHM
 
 void SPUCtor(SPU_t* proc, FILE* PtrToCm);
 void SPUDtor(SPU_t* proc);
@@ -30,7 +37,7 @@ elem_t proc_sqrt(stack_t* stk);
 elem_t proc_sin(stack_t* stk);
 elem_t proc_cos(stack_t* stk);
 elem_t out(stack_t* stk);
-size_t jump(SPU_t* proc, size_t tmp);
+size_t jump(SPU_t* proc, size_t DestAddress);
 
 int VirtualMachine(SPU_t* stk, FILE* PtrToCm);
 void ProcComparator(SPU_t* proc);

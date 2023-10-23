@@ -9,6 +9,12 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+#define RED    "\033[0;31m"
+#define GREEN  "\e[0;32m"
+#define YELLOW "\e[0;33m"
+#define WHITE  "\e[0;37m"
+#define BLUE   "\e[0;34m"
+
 struct String
 {
     char *str        = 0;

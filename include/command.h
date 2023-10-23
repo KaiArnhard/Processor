@@ -11,12 +11,6 @@
 
 #include "types.h"
 
-#define RED    "\033[0;31m"
-#define GREEN  "\e[0;32m"
-#define YELLOW "\e[0;33m"
-#define WHITE  "\e[0;37m"
-#define BLUE   "\e[0;34m"
-
 #define MyAssert(condition, command)                                                                                       \
     ((bool) (condition) ? void (0) : MyAssertionFailed(#condition, command, __FILE__, __PRETTY_FUNCTION__, __LINE__))    \
 

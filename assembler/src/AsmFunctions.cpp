@@ -22,20 +22,22 @@ int RunAssembler(const char* PathToCm, const char* PathToAsm) {
         int* command = (int*) calloc(length.NumberOfCommands, sizeof(int));
     #endif // SHM
 
-    label_t* label = nullptr;
-    label = CtorLabel(label);
+    label_t label;
+    label.inform = nullptr;
+    label.inform = CtorLabel(&label);
+    printf("%p\n", label);
 
-    length.NumberOfCommands = Comparator(Ptr2Str, length.NumberOfLines, CommandFile, command, label);
+    length.NumberOfCommands = Comparator(Ptr2Str, length.NumberOfLines, CommandFile, command, &label);
 
     for (size_t counter = 0; counter < length.NumberOfCommands; counter++) {
         int BitForm = command[counter] & BITCOMM;
-        if (JUMP && command[counter + 1] == DefaultLabelAdress) {
-            length.NumberOfCommands = Comparator(Ptr2Str, length.NumberOfLines, CommandFile, command, label);
+        if (JUMP && BitForm == CMD_CALL && command[counter + 1] == DefaultLabelAdress) {
+            length.NumberOfCommands = Comparator(Ptr2Str, length.NumberOfLines, CommandFile, command, &label);
             break;
         }   
     }
-    InputCommsToFile(label, command, CommandFile, length.NumberOfCommands);
-    Destructor(label, command, Ptr2Str);
+    InputCommsToFile(&label, command, CommandFile, length.NumberOfCommands);
+    Destructor(&label, command, Ptr2Str);
 
     return 0;
 }
@@ -51,23 +53,21 @@ int Comparator(String* PtrToStr, size_t NumbOfLines, FILE* PtrToCm, int* command
                     command[NumbOfComs - 1] += immed;                                               \
                 } else {                                                                            \
                     sscanf(PtrToStr[counter].str + strlen(#name), "%s", StrArgument);               \
-                    CodingCommWithStrArg(StrArgument, label, command, NumbOfComs, LabelCounter);    \
+                    CodingCommWithStrArg(StrArgument, label, command, NumbOfComs);                  \
                 }                                                                                   \
                 NumbOfComs++;                                                                       \
             }                                                                                       \
         } else if (strchr(StrCommand, ':')) {                                                       \
-            LabelCounter = MakeLabel(label, StrCommand, LabelCounter, NumbOfComs);                  \
+            label->counter = MakeLabel(label, StrCommand, NumbOfComs);                              \
         } else
         
     char StrCommand[StrCommandSize]  = {};
     char StrArgument[StrArgSize] = {};
 
     size_t NumbOfComs   = 0;
-    size_t LabelCounter = 0;
     int verify          = 0;                                             
     
     for (size_t counter = 0; counter < NumbOfLines; counter++) {
-
         counter = InputStrCommand(PtrToStr, StrCommand, counter);
         
         #include "dsl.h"
@@ -79,6 +79,7 @@ int Comparator(String* PtrToStr, size_t NumbOfLines, FILE* PtrToCm, int* command
             Error = -1;
         }   
     }
+    PrintOfLabels(label);
     return NumbOfComs;
 }
 
@@ -94,10 +95,10 @@ int Comparator(String* PtrToStr, size_t NumbOfLines, FILE* PtrToCm, int* command
     }
 #endif // SHM
 
-void CodingCommWithStrArg(char *StrArgument, label_t* label, int* command, const int NumbOfComs, const int LabelCounter) {
+void CodingCommWithStrArg(char *StrArgument, label_t* label, int* command, const int NumbOfComs) {
     if (strchr(StrArgument, ':')) {
         command[NumbOfComs - 1] += immed;
-        command[NumbOfComs] = LabelCheck(StrArgument, label, LabelCounter);
+        command[NumbOfComs] = LabelCheck(StrArgument, label);
     } else if(StrArgument[0] != 'R' || StrArgument[2] != 'X' || (StrArgument[1] - 'A') > 3 || strlen(StrArgument) > 3) {
         command[NumbOfComs - 1]  = REG_ERR;
     } else {
@@ -125,6 +126,7 @@ void InputCommsToFile(const label_t* label, const int* command, FILE* CommandFil
 
 void PrintOfCommsFile(const label_t* label, FILE* CommandFile, const size_t NumbOfComs) {
     fclose(CommandFile);
+   
     FILE* fp1 = fopen("../cm.bin", "rb");
     int command[NumbOfComs];
     size_t tmp[3] = {};
@@ -139,7 +141,7 @@ void PrintOfCommsFile(const label_t* label, FILE* CommandFile, const size_t Numb
     printf("\n");
     for (size_t counter = 0; counter < NumbOfComs; counter++) {
         int BitForm = command[counter] & BITCOMM;
-        if (BitForm == CMD_PUSH || BitForm == CMD_POP || JUMP) {
+        if (BitForm == CMD_PUSH || BitForm == CMD_POP || JUMP || BitForm == CMD_CALL) {
             printf("%d  %d\n", command[counter], command[counter + 1]);
             counter++;
         }
@@ -148,31 +150,7 @@ void PrintOfCommsFile(const label_t* label, FILE* CommandFile, const size_t Numb
         }
     }
     printf("\n");
-    for (size_t counter = 0; counter < label->LabelSize; counter++) {
-        printf("%d  %s  %d\n", counter, label[counter].point, label[counter].DestAddres);
-    }
-}
-
-int LabelCheck(char* NameOfLabel, label_t* label, size_t LabelCounter) {
-    for (size_t counter = 0; counter <= LabelCounter; counter++) {
-        if (!strcmp(NameOfLabel, label[counter].point)) {
-            return label[counter].DestAddres;
-        }
-    }
-    return DefaultLabelAdress;
-}
-
-int MakeLabel(label_t* label, char* NameOfLabel, size_t LabelCounter, size_t NumbOfComs) {
-    if (LabelCounter >= label->LabelSize) {
-            label = ResizeLabel(label);
-    } else if (LabelCounter >= MaxLabelSize - 1) {
-        printf(RED "Labels are full\n");
-    } else {
-        strcpy(label[LabelCounter].point, NameOfLabel);
-        label[LabelCounter].DestAddres = NumbOfComs;
-        LabelCounter++;
-    }
-    return LabelCounter;
+    
 }
 
 void Destructor(label_t* label, int* command, String* PtrToStr) {
@@ -182,7 +160,7 @@ void Destructor(label_t* label, int* command, String* PtrToStr) {
         free(command);
     #endif // SHM
     free(PtrToStr);
-    free(label);
+    free(label->inform);
 }
 
 /*int disassembly(const char* DisAsmName, const char* CmName) {

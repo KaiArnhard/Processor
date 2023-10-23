@@ -6,14 +6,11 @@
         jump(proc, tmp);                                            \
     } else if(count cond proc->Register[1]) {                       \
         jump(proc, tmp);                                            \
-    } else {                                                        \
-        proc->CurrentCommand++;                                     \
-    }
-    
+    }    
      
 
 DEF_CMD(HLT, -1, 0, 
-                    printf("\nProgramm ended succesfully\n");
+                    printf(BLUE "\nProgramm ended succesfully\n" WHITE);
                     return Error;
             )
 DEF_CMD(PUSH, 0, 1,
@@ -60,7 +57,7 @@ DEF_CMD(SIN,  8, 0,
 DEF_CMD(COS,  9, 0,
                     proc_cos(&proc->stk);)
 DEF_CMD(OUT, 10, 0,
-                    printf(GREEN"RESULT:\n");
+                    printf(GREEN "RESULT:\n" WHITE);
                     out(&proc->stk);)
 DEF_CMD(JMP, 11, 1, 
                     tmp = proc->command[++proc->CurrentCommand];
@@ -98,6 +95,12 @@ DEF_CMD(JNE, 17, 1,
                     MAKE_COND_JUMP(JNE, tmp1, !=)
                     )
 DEF_CMD(CALL, 18, 1,
+                    tmp = proc->command[++proc->CurrentCommand];
+                    StackPush(&proc->SourceAddress, proc->CurrentCommand + 1);
+                    jump(proc, tmp);
                     )
+DEF_CMD(RET, 19, 0,
+                    StackPop(&proc->SourceAddress, &tmp);
+                    jump(proc, tmp);)
 
 #include "DslUndef.h"

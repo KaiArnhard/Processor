@@ -3,17 +3,22 @@
 
 #include "types.h"
 
-struct label_t {
-    char point[100];
+struct LabelInf {
+    char LabelName[100];
     int  DestAddres;
-    int  SourceAddres[10];
-    size_t LabelSize = 0;
-}; //TODO sourse address
+};
 
-label_t* CtorLabel(label_t* label);
-label_t* ResizeLabel(label_t* label);
+struct label_t {
+    size_t counter;
+    size_t size;
+    LabelInf* inform;
+};
 
-int LabelCheck(char* NameOfLabel, label_t* label, size_t LabelCounter);
-int MakeLabel(label_t* label, char* NameOfLabel, size_t LabelCounter, size_t NumbOfComs);
+LabelInf* CtorLabel (label_t* label);
+LabelInf* ResizeLabel(label_t* label);
+
+int LabelCheck(const char* NameOfLabel, label_t* label);
+int MakeLabel(label_t* label, char* NameOfLabel, size_t NumbOfComs);
+void PrintOfLabels(label_t* label);
 
 #endif // LABELS_H
