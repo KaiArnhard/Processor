@@ -9,11 +9,9 @@ int main(int argc, char* argv[]) {
         printf(RED "You entered too many names of files\n");
     }
     
-    FILE* PtrToCM = fopen(argv[1], "rb");
+    SPUCtor(&proc, argv[1]);
 
-    SPUCtor(&proc, PtrToCM);
-
-    VirtualMachine(&proc, PtrToCM);
+    VirtualMachine(&proc);
     
     SPUDtor(&proc);
     return Error;

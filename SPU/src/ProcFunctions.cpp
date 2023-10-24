@@ -1,10 +1,12 @@
 #include "proc.h"
 #include "command.h"
 
-void SPUCtor(SPU_t* proc, FILE* PtrToCm) {
+void SPUCtor(SPU_t* proc, const char* PathToCm) {
+    FILE* PtrToCM = fopen(PathToCm, "rb");
+    assert(PtrToCM != nullptr && "You entered not a file");
     size_t check[3] = {};
     
-    fread(check, sizeof(size_t), sizeof(check) / sizeof(size_t), PtrToCm);
+    fread(check, sizeof(size_t), sizeof(check) / sizeof(size_t), PtrToCM);
 
     if (check[0] != signature) {
         printf(RED "Wrong signature! Your signature: %d\n", check[0]);
@@ -21,7 +23,7 @@ void SPUCtor(SPU_t* proc, FILE* PtrToCm) {
     #else
         size_t size = proc->NumbOfComs;
         proc->command = (elem_t*) calloc(size, sizeof(elem_t));
-        fread(proc->command, sizeof(int), proc->NumbOfComs, PtrToCm);
+        fread(proc->command, sizeof(int), proc->NumbOfComs, PtrToCM);
     #endif // SHM
     
     STACK_CTOR(&proc->stk);
@@ -183,11 +185,10 @@ size_t jump(SPU_t* proc, size_t DestAddress) {
     return proc->CurrentCommand;
 }
 
-int VirtualMachine(SPU_t* proc, FILE* PtrToCm) {
+int VirtualMachine(SPU_t* proc) {
 
     #define DEF_CMD(name, numb, arg, code)  \
         case (CMD_##name & BITCOMM):        \
-            printf("%d\n", proc->CurrentCommand);                       \
             code                            \
         break;
     

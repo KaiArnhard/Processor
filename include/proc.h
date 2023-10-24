@@ -25,7 +25,7 @@ struct SPU_t {
     elem_t* SPUShmCtor();
 #endif // SHM
 
-void SPUCtor(SPU_t* proc, FILE* PtrToCm);
+void SPUCtor(SPU_t* proc, const char* PathToCm);
 void SPUDtor(SPU_t* proc);
 void SPUDump(SPU_t* proc, const char* file, const char* function, size_t line);
 
@@ -39,7 +39,7 @@ elem_t proc_cos(stack_t* stk);
 elem_t out(stack_t* stk);
 size_t jump(SPU_t* proc, size_t DestAddress);
 
-int VirtualMachine(SPU_t* stk, FILE* PtrToCm);
+int VirtualMachine(SPU_t* proc);
 void ProcComparator(SPU_t* proc);
 int bitwise(char* BitComm, char* Identif);
 
