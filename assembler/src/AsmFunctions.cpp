@@ -4,9 +4,6 @@
 #include "asm.h"
 
 int RunAssembler(const char* PathToCm, const char* PathToAsm) {
-    FILE* CommandFile = fopen(PathToCm, "wb");
-    assert(CommandFile != nullptr);
-
     String* Ptr2Str = nullptr;
     Lengths length = {};
 
@@ -27,22 +24,22 @@ int RunAssembler(const char* PathToCm, const char* PathToAsm) {
     label.inform = CtorLabel(&label);
     printf("%p\n", label);
 
-    length.NumberOfCommands = Comparator(Ptr2Str, length.NumberOfLines, CommandFile, command, &label);
+    length.NumberOfCommands = Comparator(Ptr2Str, length.NumberOfLines, command, &label);
 
     for (size_t counter = 0; counter < length.NumberOfCommands; counter++) {
         int BitForm = command[counter] & BITCOMM;
         if (JUMP && BitForm == CMD_CALL && command[counter + 1] == DefaultLabelAdress) {
-            length.NumberOfCommands = Comparator(Ptr2Str, length.NumberOfLines, CommandFile, command, &label);
+            length.NumberOfCommands = Comparator(Ptr2Str, length.NumberOfLines, command, &label);
             break;
         }   
     }
-    InputCommsToFile(&label, command, CommandFile, length.NumberOfCommands);
+    InputCommsToFile(&label, command, PathToCm, length.NumberOfCommands);
     Destructor(&label, command, Ptr2Str);
 
     return 0;
 }
 
-int Comparator(String* PtrToStr, size_t NumbOfLines, FILE* PtrToCm, int* command, label_t* label) {
+int Comparator(String* PtrToStr, size_t NumbOfLines, int* command, label_t* label) {
 
     #define DEF_CMD(name, numb, arg, ...)                                                           \
         if (!strcmp(StrCommand, #name)) {                                                           \
@@ -115,25 +112,29 @@ int InputStrCommand(String* Ptr2Str, char* StrCommand, size_t counter) {
     return counter;
 }
 
-void InputCommsToFile(const label_t* label, const int* command, FILE* CommandFile, const size_t NumbOfComs) {
+void InputCommsToFile(const label_t* label, const int* command, const char* PathToCm, const size_t NumbOfComs) {
+    FILE* CommandFile = fopen(PathToCm, "wb");
+    assert(CommandFile != nullptr);
+
     size_t tmp[3] = {signature, version, NumbOfComs};
 
     fwrite(tmp, sizeof(size_t), sizeof(tmp) / sizeof(size_t), CommandFile);
     fwrite(command, sizeof(int), NumbOfComs, CommandFile);
-
-    PrintOfCommsFile(label, CommandFile, NumbOfComs);             
+             
+    fclose(CommandFile);
+    PrintOfCommsFile(label, PathToCm, NumbOfComs);
 }
 
-void PrintOfCommsFile(const label_t* label, FILE* CommandFile, const size_t NumbOfComs) {
-    fclose(CommandFile);
-   
-    FILE* fp1 = fopen("../cm.bin", "rb");
+void PrintOfCommsFile(const label_t* label, const char* PathToCm, const size_t NumbOfComs) {
+    FILE* CommandFile = fopen(PathToCm, "rb");
+    assert(CommandFile != nullptr);
+
     int command[NumbOfComs];
     size_t tmp[3] = {};
     
-    fread(tmp, sizeof(size_t), sizeof(tmp) / sizeof(size_t), fp1);
-    fread(command, sizeof(int), NumbOfComs, fp1);
-    fclose(fp1);
+    fread(tmp, sizeof(size_t), sizeof(tmp) / sizeof(size_t), CommandFile);
+    fread(command, sizeof(int), NumbOfComs, CommandFile);
+    fclose(CommandFile);
 
     for (size_t counter = 0; counter < sizeof(tmp) / sizeof(size_t); counter++) {
         printf("%d\t", tmp[counter]);

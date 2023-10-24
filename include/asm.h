@@ -18,14 +18,14 @@ static const size_t DefaultLabelSize  =  10;
 static const int DefaultLabelAdress   = -1;
 
 int RunAssembler(const char* PathToCm, const char* PathToAsm);
-int Comparator(String* PtrToStr, size_t NumbOfLines, FILE* PtrToCm, int* commands, label_t* label);
+int Comparator(String* PtrToStr, size_t NumbOfLines, int* commands, label_t* label);
 
 int InputStrCommand(String* Ptr2Str, char* StrCommand, size_t counter);
 
 void CodingCommWithStrArg(char *StrArgument, label_t* label, int* command, const int NumbOfComs);
 
-void InputCommsToFile(const label_t* label, const int* command, FILE* CommandFile, const size_t NumbOfComs);
-void PrintOfCommsFile(const label_t* label, FILE* CommandFile, const size_t NumbOfComs);
+void InputCommsToFile(const label_t* label, const int* command, const char* PathToCm, const size_t NumbOfComs);
+void PrintOfCommsFile(const label_t* label, const char* PathToCm, const size_t NumbOfComs);
 
 void Destructor(label_t* label, int* command, String* PtrToStr);
 
