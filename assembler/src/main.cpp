@@ -14,5 +14,7 @@ int main(int argc, char* argv[]) {
     }
     
     RunAssembler(argv[2], argv[1]);
+    disassembly("disasmled.txt", argv[2]);
+    
     return Error;
 }

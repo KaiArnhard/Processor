@@ -22,7 +22,6 @@ int RunAssembler(const char* PathToCm, const char* PathToAsm) {
     label_t label;
     label.inform = nullptr;
     label.inform = CtorLabel(&label);
-    printf("%p\n", label);
 
     length.NumberOfCommands = Comparator(Ptr2Str, length.NumberOfLines, command, &label);
 
@@ -164,67 +163,111 @@ void Destructor(label_t* label, int* command, String* PtrToStr) {
     free(label->inform);
 }
 
-/*int disassembly(const char* DisAsmName, const char* CmName) {
+int disassembly(const char* DisAsmName, const char* CmName) {
     FILE* PtrToAsm = fopen(DisAsmName, "w");
-    FILE* PtrToCm  = fopen(CmName,     "r");
-    
+    assert(PtrToAsm != nullptr);
+    FILE* PtrToCm  = fopen(CmName,     "rb");
+    assert(PtrToCm != nullptr);
     int tmp = __INT_MAX__;
-    int cm[3] = {};
+    size_t inf[3] = {};
 
-    fread(cm, sizeof(int), 3, PtrToCm);
-    fwrite(cm, sizeof(int), 3, PtrToAsm);
+    fread(inf, sizeof(size_t), 3, PtrToCm);
 
     for (size_t i = 0; i < 3; i++) {
-        printf("%d\n", cm[i]);
+        fprintf(PtrToAsm, "%d\n", inf[i]);
     }
     
-    int* command = (int*) calloc(cm[2], sizeof(int));
-    fread(command, sizeof(int), cm[2], PtrToCm);
+    int* command = (int*) calloc(inf[2], sizeof(int));
+    fread(command, sizeof(int), inf[2], PtrToCm);
 
-    for (size_t counter = 0; counter < cm[2]; counter++) {
+    for (size_t counter = 0; counter < inf[2]; counter++) {
         switch (command[counter] & BITCOMM) {
-        case (HLT & BITCOMM):
+        case (CMD_HLT & BITCOMM):
             fprintf(PtrToAsm, "HLT\n");
             break;
-        case STACK_PUSH:
-            fprintf(PtrToAsm, "PUSH ");
-            tmp = command[counter + 1];
-            counter++;
-            fprintf(PtrToAsm, "%d\n", tmp);
+        case CMD_PUSH:
+            switch (command[counter] & IDENTIF)
+            {
+            case immed:
+                fprintf(PtrToAsm, "PUSH Number ");
+                fprintf(PtrToAsm, "%d\n", command[++counter]);
+                break;
+            case regis:
+                fprintf(PtrToAsm, "PUSH Register ");
+                fprintf(PtrToAsm, "%d\n", command[++counter]);
+                break;
+            default:
+                break;
+            }
             break;
-        case STACK_IN:
+        case CMD_IN:
             fprintf(PtrToAsm, "IN\n");
             break;
-        case STACK_POP:
-            fprintf(PtrToAsm, "POP\n");
-            tmp = command[++counter];
+        case CMD_POP:
+            fprintf(PtrToAsm, "POP ");
+            fprintf(PtrToAsm, "%d\n", command[++counter]);
             break;
-        case ADD:
+        case CMD_ADD:
             fprintf(PtrToAsm, "ADD\n");
             break;
-        case SUB:
+        case CMD_SUB:
             fprintf(PtrToAsm, "SUB\n");
             break;
-        case DIV:
+        case CMD_DIV:
             fprintf(PtrToAsm, "DIV\n");
             break;
-        case MUL:
+        case CMD_MUL:
             fprintf(PtrToAsm, "MUL\n");
             break;
-        case SQRT:
+        case CMD_SQRT:
             fprintf(PtrToAsm, "SQRT\n");
             break;
-        case SIN:
+        case CMD_SIN:
             fprintf(PtrToAsm, "SIN\n");
             break;
-        case COS:
+        case CMD_COS:
             fprintf(PtrToAsm, "COS\n");
             break;
-        case OUT:
+        case CMD_OUT:
             fprintf(PtrToAsm, "OUT\n");
             break;
+        case CMD_JMP:
+            fprintf(PtrToAsm, "JMP ");
+            fprintf(PtrToAsm, "%d\n", command[++counter]);
+            break;
+        case CMD_JA:
+            fprintf(PtrToAsm, "JA ");
+            fprintf(PtrToAsm, "%d\n", command[++counter]);
+            break;
+        case CMD_JAE:
+            fprintf(PtrToAsm, "JAE ");
+            fprintf(PtrToAsm, "%d\n", command[++counter]);
+            break;
+        case CMD_JB:
+            fprintf(PtrToAsm, "JB ");
+            fprintf(PtrToAsm, "%d\n", command[++counter]);
+            break;
+        case CMD_JBE:
+            fprintf(PtrToAsm, "JBE ");
+            fprintf(PtrToAsm, "%d\n", command[++counter]);
+            break;
+        case CMD_JE:
+            fprintf(PtrToAsm, "JE ");
+            fprintf(PtrToAsm, "%d\n", command[++counter]);
+            break;
+        case CMD_JNE:
+            fprintf(PtrToAsm, "JNE ");
+            fprintf(PtrToAsm, "%d\n", command[++counter]);
+            break;
+        case CMD_CALL:
+            fprintf(PtrToAsm, "CALL ");
+            fprintf(PtrToAsm, "%d\n", command[++counter]);
+            break;   
+        case CMD_RET:
+            fprintf(PtrToAsm, "RET\n");
+            break;     
         default:
-            MyAssert(1 && "Wrong instruction");
+            MyAssert(1 && "Wrong instruction",(char*) command + counter);
             Error = -1;
             return Error;
             break;
@@ -236,7 +279,7 @@ void Destructor(label_t* label, int* command, String* PtrToStr) {
     fclose(PtrToCm);
 
     return 0;
-}*/
+}
 
 void MyAssertionFailed(const char* condition, const char* command, const char* file, const char* function, const int line) {
     printf(RED "Assertion failed on file %s on function %s:%d\n", file, function, line);

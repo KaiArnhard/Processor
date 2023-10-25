@@ -11,7 +11,7 @@
 
 #include "types.h"
 
-#define MyAssert(condition, command)                                                                                       \
+#define MyAssert(condition, command)                                                                                     \
     ((bool) (condition) ? void (0) : MyAssertionFailed(#condition, command, __FILE__, __PRETTY_FUNCTION__, __LINE__))    \
 
 #define DEF_CMD(name, numb, ...)    \

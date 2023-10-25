@@ -31,5 +31,8 @@ $(INPUT).o: $(SRC)$(INPUT).cpp
 $(LABELS).o: $(SRC)$(LABELS).cpp
 	$(CXX) $(CFLAGS_OBJ) $< -o $(OBJ)$(LABELS).o
 
+run:
+	./asm ../asm.txt ../cm.bin
+
 clean:
 	rm -rf *.o proc
