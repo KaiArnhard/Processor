@@ -16,6 +16,9 @@ DEF_CMD(HLT, -1, 0,
 DEF_CMD(PUSH, 0, 1,
                     tmp = proc->command[++proc->CurrentCommand];
                     switch (proc->command[proc->CurrentCommand - 1] & IDENTIF) {
+                    case RAMIdentif:
+                        StackPush(&proc->stk, proc->RAM[tmp]);
+                        break;
                     case regis:
                         StackPush(&proc->stk, proc->Register[tmp]);
                         break;
@@ -26,6 +29,9 @@ DEF_CMD(PUSH, 0, 1,
 DEF_CMD(POP,  1, 1, 
                     tmp = proc->command[++proc->CurrentCommand];
                     switch (proc->command[proc->CurrentCommand - 1] & IDENTIF) {
+                    case RAMIdentif:
+                        StackPop(&proc->stk, proc->RAM + tmp);
+                        break;
                     case regis:
                         StackPop(&proc->stk, proc->Register + tmp);
                         break;

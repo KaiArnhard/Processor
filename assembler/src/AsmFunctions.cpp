@@ -92,14 +92,59 @@ int Comparator(String* PtrToStr, size_t NumbOfLines, int* command, label_t* labe
 #endif // SHM
 
 void CodingCommWithStrArg(char *StrArgument, label_t* label, int* command, const int NumbOfComs) {
+    char* left  = nullptr;
+    char* right = nullptr;
+
     if (strchr(StrArgument, ':')) {
         command[NumbOfComs - 1] += immed;
         command[NumbOfComs] = LabelCheck(StrArgument, label);
-    } else if(StrArgument[0] != 'R' || StrArgument[2] != 'X' || (StrArgument[1] - 'A') > 3 || strlen(StrArgument) > 3) {
+    } else if((left = strchr(StrArgument, '[')) != nullptr && (right = strchr(StrArgument, ']')) != nullptr) {
+        MakePtrToRAM(command, left, right, NumbOfComs);
+    } else {
+        MakeRegister(command, StrArgument, NumbOfComs);
+    }
+}
+
+int MakePtrToRAM(int* command, char* left, char* right, const int NumbOfComs) {
+    left++;
+    
+    size_t size = (size_t) (right - left);
+    int tmp = 0;
+
+    if (CheckOfDigit(left, size)) {
+        command[NumbOfComs - 1] += RAMIdentif;
+        command[NumbOfComs] = strtod(left, &right);
+        return RAMIdentif;
+    } else if ((tmp = MakeRegister(command, left, NumbOfComs)) == regis) {
+        command[NumbOfComs - 1] += RAMIdentif;
+        return RAMIdentif + immed;
+    } else if (tmp == REG_ERR) {
+        MyAssert(0 && "You entered wrong register", left);
+        return REG_ERR;
+    }
+    
+    return 0;
+}
+
+int CheckOfDigit(char* left, size_t size) {
+    int tmp = 0;
+    for (size_t counter = 0; counter < size; counter++) {
+        tmp = isdigit(left[counter]);
+        if (tmp == 0) {
+            return tmp;
+        }
+    }
+    return tmp;
+}
+
+int MakeRegister(int* command, const char* StrArgument, const int NumbOfComs) {
+    if(StrArgument[0] != 'R' || StrArgument[2] != 'X' || (StrArgument[1] - 'A') > 3 || strlen(StrArgument) > 3) {
         command[NumbOfComs - 1]  = REG_ERR;
+        return REG_ERR;
     } else {
         command[NumbOfComs - 1] += regis;
         command[NumbOfComs] = StrArgument[1] - 'A';
+        return regis;
     }
 }
 

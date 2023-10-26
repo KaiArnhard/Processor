@@ -5,9 +5,11 @@
 #include "stack.h"
 
 static const size_t NumbOfRegs = 4;
+static const size_t SizeOfRAM  = 100;
 
 struct SPU_t {
     elem_t Register[NumbOfRegs];
+    elem_t RAM[100] = {};
 
     stack_t stk;
     stack_t SourceAddress;

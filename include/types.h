@@ -1,7 +1,7 @@
 #ifndef TYPES_H
 #define TYPES_H
 
-#include <ctype.h>
+#include <cctype>
 #include <cstdlib>
 #include <cstdio>
 #include <cstring>
