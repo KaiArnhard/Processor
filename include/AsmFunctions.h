@@ -1,5 +1,5 @@
-#if !defined(ASM_H)
-#define ASM_H
+#if !defined(ASM_FUNCTIONS_H)
+#define ASM_FUNCTIONS_H
 
 #include "types.h"
 #include "labels.h"
@@ -35,4 +35,4 @@ int disassembly(const char* DisAsmName, const char* CmName);
 
 int CheckOfDigit(char* left, size_t size);
 
-#endif // ASM_H
+#endif // ASM_FUNCTIONS_H

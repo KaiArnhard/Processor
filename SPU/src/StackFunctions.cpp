@@ -1,4 +1,4 @@
-#include "stack.h"
+#include "StackFunctions.h"
 #include <assert.h>
 
 void StackCtor (stack_t* stk, size_t capacity, const char* name, const size_t line, const char* file, const char* function) {
@@ -14,15 +14,11 @@ void StackCtor (stack_t* stk, size_t capacity, const char* name, const size_t li
         char* ptr = nullptr;
         ptr = (char* ) calloc(capacity * sizeof(elem_t) + 2 * sizeof(canary_t), sizeof(char));
         assert(ptr);
-        stk->offset = (((size_t) ptr + sizeof(canary_t) + sizeof(elem_t) * capacity) % 8);
-
+        
         ((canary_t*) ptr)[0] = stk->LeftCanary;
 
-        if (stk->offset != 0) {
-            ((canary_t*) (ptr + sizeof(canary_t) + capacity * sizeof(elem_t) + stk->offset))[0] = stk->RightCanary;
-        } else {
-            ((canary_t*) (ptr + sizeof(canary_t) + capacity * sizeof(elem_t)))[0] = stk->RightCanary;
-        }
+        ((canary_t*) (ptr + sizeof(canary_t) + capacity * sizeof(elem_t)))[0] = stk->RightCanary;
+
         stk->data = (elem_t*) (ptr + sizeof(canary_t));
         PoisStack(stk);
         #if defined(HASH_PROT)
@@ -59,7 +55,6 @@ void StackDtor(stack_t* stk) {
     stk->size = UINT_MAX;
     stk->var = {"alsdjfas", UINT_MAX, "aslkdfjaslkf", "lasdkjfsaklf"};
     stk = nullptr;
-    fclose(PointerToDump);
 }
 
 void PoisStack(stack_t* stk) {
@@ -218,20 +213,12 @@ size_t StackVerify(stack_t* stk) {
         } if (stk->RightCanary != 0xBADC0FFEE) {
             MyErrorno |= STACK_ERROR_LEFT_CANARY_DIED;
         
-        } if (stk->offset) {
-             if (((canary_t*) stk->data)[-1] != 0xDED320BED) {
-                MyErrorno |= STACK_ERROR_DATA_LEFT_CANARY_DIED;
-        
-            } if (((canary_t*) (stk->data + stk->capacity + stk->offset))[0] != 0xBADC0FFEE) {
-                MyErrorno |= STACK_ERROR_DATA_RIGHT_CANARY_DIED;
-            }
-        } else {
-            if (((canary_t*) stk->data)[-1] != 0xDED320BED) {
-                MyErrorno |= STACK_ERROR_DATA_LEFT_CANARY_DIED;
-        
-            } if (((canary_t*) (stk->data + stk->capacity))[0] != 0xBADC0FFEE) {
-                MyErrorno |= STACK_ERROR_DATA_RIGHT_CANARY_DIED;
         }
+        if (((canary_t*) stk->data)[-1] != 0xDED320BED) {
+            MyErrorno |= STACK_ERROR_DATA_LEFT_CANARY_DIED;
+    
+        } if (((canary_t*) (stk->data + stk->capacity))[0] != 0xBADC0FFEE) {
+            MyErrorno |= STACK_ERROR_DATA_RIGHT_CANARY_DIED;
         }        
                 
     #endif // CANARY_PROT

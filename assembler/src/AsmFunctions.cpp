@@ -1,7 +1,7 @@
 #include <cstdio>
 #include "command.h"
 #include "FileInput.h"
-#include "asm.h"
+#include "AsmFunctions.h"
 
 int RunAssembler(const char* PathToCm, const char* PathToAsm) {
     String* Ptr2Str = nullptr;

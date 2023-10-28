@@ -1,4 +1,4 @@
-#include "proc.h"
+#include "ProcFunctions.h"
 #include "command.h"
 
 int main(int argc, char* argv[]) {
@@ -14,5 +14,5 @@ int main(int argc, char* argv[]) {
     VirtualMachine(&proc);
     
     SPUDtor(&proc);
-    return Error;
+    return 0;
 }

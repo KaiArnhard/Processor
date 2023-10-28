@@ -1,4 +1,4 @@
-#include "asm.h"
+#include "AsmFunctions.h"
 #include "types.h"
 
 LabelInf* CtorLabel(label_t* label) {

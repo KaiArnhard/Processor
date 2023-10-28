@@ -1,36 +1,53 @@
-#include "proc.h"
+#include <unistd.h>
+#include "ProcFunctions.h"
 #include "command.h"
+
+void SPUCtor(SPU_t* proc, stack_t UserStack, stack_t CallStack, elem_t* commands, size_t NumbOfComms) {
+    *proc = {
+        .Register       = {0},
+        .RAM            = {0},
+        .UserStack      = UserStack,
+        .CallStack      = CallStack,
+        .NumbOfComs     = NumbOfComms,
+        .CurrentCommand = 0,
+        .command        = commands,
+    };
+}
 
 void SPUCtor(SPU_t* proc, const char* PathToCm) {
     FILE* PtrToCM = fopen(PathToCm, "rb");
     assert(PtrToCM != nullptr && "You entered not a file");
-    size_t check[3] = {};
     
-    fread(check, sizeof(size_t), sizeof(check) / sizeof(size_t), PtrToCM);
+    struct {
+        size_t signature;
+        size_t version;
+        size_t NumbOfComms;
+    } BinHeader;
+    
+    fread(&BinHeader, sizeof(BinHeader), 1, PtrToCM);
 
-    if (check[0] != signature) {
-        printf(RED "Wrong signature! Your signature: %d\n", check[0]);
+    if (BinHeader.signature != signature) {
+        printf(RED "Wrong signature! Your signature: %d\n", BinHeader.signature);
         abort();
-    } else if (check[1] != version) {
-        printf(RED "Wrong version! %d\n", check[1]);
+    } else if (BinHeader.version != version) {
+        printf(RED "Wrong version! %d\n", BinHeader.version);
         abort();
     }
-    proc->NumbOfComs = check[2];
-    proc->CurrentCommand = 0;
-    
     #if defined(SHM)
         proc->command = SPUShmCtor();
     #else
-        size_t size = proc->NumbOfComs;
-        proc->command = (elem_t*) calloc(size, sizeof(elem_t));
-        fread(proc->command, sizeof(int), proc->NumbOfComs, PtrToCM);
+        elem_t* commands = (elem_t*) calloc(BinHeader.NumbOfComms, sizeof(elem_t));
+        fread(commands, sizeof(*commands), BinHeader.NumbOfComms, PtrToCM);
     #endif // SHM
     
-    STACK_CTOR(&proc->stk);
-    STACK_CTOR(&proc->SourceAddress);
-    for (size_t counter = 0; counter < NumbOfRegs; counter++) {
-        proc->Register[counter] = 0;
-    }
+    fclose(PtrToCM);
+
+    stack_t UserStack;
+    STACK_CTOR(&UserStack);
+    stack_t CallStack;
+    STACK_CTOR(&CallStack);
+
+    SPUCtor(proc, UserStack, CallStack, commands, BinHeader.NumbOfComms);
     
 }
 
@@ -48,7 +65,6 @@ void SPUCtor(SPU_t* proc, const char* PathToCm) {
 
 
 void SPUDtor(SPU_t* proc) {
-    
     for (size_t counter = 0; counter < NumbOfRegs; counter++) {
         proc->Register[counter] = POISON;
     }
@@ -61,13 +77,17 @@ void SPUDtor(SPU_t* proc) {
     #else
         free(proc->command);
     #endif // SHM
+    
+    StackDtor(&proc->UserStack);
+    StackDtor(&proc->CallStack);
+
     proc->command = nullptr;
-    StackDtor(&proc->stk);
     proc = nullptr;
+    fclose(PointerToDump);
 }
 
 void SPUDump(SPU_t* proc, const char* file, const char* function, size_t line) {
-    PointerToDump = StackDump(&proc->stk, file, function, line);
+    PointerToDump = StackDump(&proc->UserStack, file, function, line);
     
     fprintf(PointerToDump, "\nAll registers \n");
     for (size_t counter = 0; counter < NumbOfRegs; counter++) {
@@ -93,89 +113,103 @@ void SPUDump(SPU_t* proc, const char* file, const char* function, size_t line) {
     fprintf(PointerToDump, "\n");
 }
 
-elem_t add(stack_t *stk) {
+void PrintfOfRAM(SPU_t* proc) {
+    for (size_t counter = 0; counter < SizeOfRAM; counter += 10) {
+        for (size_t counter1 = counter; counter1 < 10 + counter; counter1++) {
+            if (proc->RAM[counter1] != 0) {
+                printf("*");
+            } else {
+                printf(".");
+            }
+        }
+        printf("\n");
+    }
+    system("clear");
+    sleep(0.5);
+}
+
+elem_t add(stack_t *UserStack) {
     elem_t tmp1 = 0;
     elem_t tmp2 = 0;
 
-    StackPop(stk, &tmp1);
-    StackPop(stk, &tmp2);
-    StackPush(stk, (tmp1 + tmp2));
+    StackPop(UserStack, &tmp1);
+    StackPop(UserStack, &tmp2);
+    StackPush(UserStack, (tmp1 + tmp2));
 
     return (tmp1 + tmp2);
 }
 
-elem_t sub(stack_t* stk) {
+elem_t sub(stack_t* UserStack) {
     elem_t deduct =  0;
     elem_t redused = 0;
 
-    StackPop(stk, &deduct);
-    StackPop(stk, &redused);
-    StackPush(stk, (redused - deduct));
+    StackPop(UserStack, &deduct);
+    StackPop(UserStack, &redused);
+    StackPush(UserStack, (redused - deduct));
 
     return (redused - deduct);
 }
 
-elem_t div(stack_t* stk) {
+elem_t div(stack_t* UserStack) {
     elem_t divider   = 0;
     elem_t divisible = 0;
 
-    StackPop(stk, &divider);
-    StackPop(stk, &divisible);
-    StackPush(stk, (divisible * SIGNS / divider));
+    StackPop(UserStack, &divider);
+    StackPop(UserStack, &divisible);
+    StackPush(UserStack, (divisible * SIGNS / divider));
 
     return (divisible * SIGNS) / divider;
 }
 
-elem_t mul(stack_t* stk) {
+elem_t mul(stack_t* UserStack) {
     elem_t tmp1 = 0;
     elem_t tmp2 = 0;
 
-    StackPop(stk, &tmp1);
-    StackPop(stk, &tmp2);
-    StackPush(stk, tmp1 * tmp2 / SIGNS);
+    StackPop(UserStack, &tmp1);
+    StackPop(UserStack, &tmp2);
+    StackPush(UserStack, tmp1 * tmp2 / SIGNS);
 
     return tmp1 * tmp2;
 }
 
-elem_t proc_sqrt(stack_t* stk) {
+elem_t proc_sqrt(stack_t* UserStack) {
     elem_t tmp = 0;
-    StackPop(stk, &tmp);
+    StackPop(UserStack, &tmp);
     double tmp1 = sqrt(tmp * SIGNS);
     tmp = tmp1;
-    StackPush(stk, tmp);
+    StackPush(UserStack, tmp);
     return tmp;
 }
 
-elem_t proc_sin(stack_t* stk) {
+elem_t proc_sin(stack_t* UserStack) {
     elem_t tmp = 0;
-    StackPop(stk, &tmp);
+    StackPop(UserStack, &tmp);
     double tmp1 = sin(tmp / SIGNS) * SIGNS;
     tmp = tmp1;
-    StackPush(stk, tmp);
+    StackPush(UserStack, tmp);
     return tmp;
 }
 
-elem_t proc_cos(stack_t* stk) {
+elem_t proc_cos(stack_t* UserStack) {
     elem_t tmp = 0;
-    StackPop(stk, &tmp);
+    StackPop(UserStack, &tmp);
     double tmp1 = cos(tmp / SIGNS) * SIGNS;
     tmp = tmp1;
-    StackPush(stk, tmp);
+    StackPush(UserStack, tmp);
     return tmp;
 }
 
-elem_t in(stack_t *stk) {
+elem_t in(stack_t *UserStack) {
     elem_t tmp = 0;
     scanf("%d", &tmp);
     return tmp;
 }
 
-elem_t out(stack_t* stk) {
+elem_t out(stack_t* UserStack) {
     elem_t tmp = 0;
-    StackPop(stk, &tmp);
+    StackPop(UserStack, &tmp);
     
-    printf(GREEN);
-    printf("%d\n", tmp);
+    printf(GREEN "%d\n" WHITE, tmp);
     
     return tmp;
 }

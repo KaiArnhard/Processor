@@ -1,5 +1,5 @@
-#ifndef STACK_H
-#define STACK_H
+#ifndef STACK_FUNCTIONS_H
+#define STACK_FUNCTIONS_H
 
 #include <cstdio>
 #include <cstdlib>
@@ -43,7 +43,6 @@ struct stack_t {
     
 
     #if defined(CANARY_PROT)
-        int offset = 0;
         canary_t RightCanary = 0xBADC0FFEE;
     #endif //RIGHT_CANARY_PROT
 };

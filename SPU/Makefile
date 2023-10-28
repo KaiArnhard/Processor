@@ -1,30 +1,23 @@
-CXX = g++
-
 INCLUDE = ../include
 OBJ     = obj/
 SRC     = src/
 
-PROC  = ProcFunctions
-STACK = StackFunctions
-MAIN  = main
+CXX = g++ -I $(INCLUDE) $(CFLAGS)
 
-CFLAGS     = $(IFLAGS)
-CFLAGS_OBJ = $(IFLAGS) -c
-IFLAGS     = -I  $(INCLUDE)
+SOURCES = $(wildcard $(SRC)/*.cpp)
+OBJECTS = $(foreach x,$(SOURCES), $(OBJ)/$(x).o)
 
 all: proc
 
-proc: $(OBJ)$(MAIN).o $(OBJ)$(PROC).o $(OBJ)$(STACK).o
-	$(CXX) $(CFLAGS) $^ -o $@
+run: proc
+	./proc $(ARGS)
 
-$(MAIN).o: $(SRC)/$(MAIN).cpp 
-	$(CXX) $(CFLAGS_OBJ) $< -o $(OBJ)$(MAIN).o
+proc: $(OBJECTS)
+	$(CXX) -o $@ $(CFLAGS) $(OBJECTS)
 
-$(PROC).o: $(SRC)$(PROC).cpp
-	$(CXX) $(CFLAGS_OBJ) $< -o $(OBJ)$(PROC).o
-
-$(STACK).o: $(SRC)$(STACK).cpp
-	$(CXX) $(CFLAGS_OBJ) $< -o $(OBJ)$(STACK).o
+$(OBJ)/%.o: %
+	mkdir -p $(dir $@)
+	$(CXX) -o $@ -c $<
 
 clean:
-	rm -rf *.o proc
+	rm -rf $(OBJ)/*.o proc

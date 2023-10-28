@@ -17,23 +17,27 @@ DEF_CMD(PUSH, 0, 1,
                     tmp = proc->command[++proc->CurrentCommand];
                     switch (proc->command[proc->CurrentCommand - 1] & IDENTIF) {
                     case RAMIdentif:
-                        StackPush(&proc->stk, proc->RAM[tmp]);
+                        sleep(0.5);
+                        StackPush(&proc->UserStack, proc->RAM[tmp]);
+                        PrintfOfRAM(proc);
                         break;
                     case regis:
-                        StackPush(&proc->stk, proc->Register[tmp]);
+                        StackPush(&proc->UserStack, proc->Register[tmp]);
                         break;
                     case immed:
-                        StackPush(&proc->stk, tmp * SIGNS);
+                        StackPush(&proc->UserStack, tmp * SIGNS);
                         break;
                     })
 DEF_CMD(POP,  1, 1, 
                     tmp = proc->command[++proc->CurrentCommand];
                     switch (proc->command[proc->CurrentCommand - 1] & IDENTIF) {
                     case RAMIdentif:
-                        StackPop(&proc->stk, proc->RAM + tmp);
+                        sleep(0.5);
+                        StackPop(&proc->UserStack, proc->RAM + tmp);
+                        PrintfOfRAM(proc);
                         break;
                     case regis:
-                        StackPop(&proc->stk, proc->Register + tmp);
+                        StackPop(&proc->UserStack, proc->Register + tmp);
                         break;
                     case immed:
                         MyAssert((proc->command[proc->CurrentCommand - 1] & IDENTIF == immed) && "You are trying to pop a constant! Are you idiot!?", (char*) &(proc->command[proc->CurrentCommand]));
@@ -47,66 +51,66 @@ DEF_CMD(IN,   2, 0,
                         while ((symbol = getchar()) != EOF && symbol != '\n') { }
                     }
                     tmp *= SIGNS;
-                    StackPush(&proc->stk, tmp);)
+                    StackPush(&proc->UserStack, tmp);)
 DEF_CMD(ADD,  3, 0,
-                    add(&proc->stk);)
+                    add(&proc->UserStack);)
 DEF_CMD(SUB,  4, 0,
-                    sub(&proc->stk);)
+                    sub(&proc->UserStack);)
 DEF_CMD(MUL,  5, 0,
-                    mul(&proc->stk);)
+                    mul(&proc->UserStack);)
 DEF_CMD(DIV,  6, 0,
-                    div(&proc->stk);)
+                    div(&proc->UserStack);)
 DEF_CMD(SQRT, 7, 0,
-                    proc_sqrt(&proc->stk);)
+                    proc_sqrt(&proc->UserStack);)
 DEF_CMD(SIN,  8, 0,
-                    proc_sin(&proc->stk);)
+                    proc_sin(&proc->UserStack);)
 DEF_CMD(COS,  9, 0,
-                    proc_cos(&proc->stk);)
+                    proc_cos(&proc->UserStack);)
 DEF_CMD(OUT, 10, 0,
                     printf(GREEN "RESULT:\n" WHITE);
-                    out(&proc->stk);)
+                    out(&proc->UserStack);)
 DEF_CMD(JMP, 11, 1, 
                     tmp = proc->command[++proc->CurrentCommand];
                     MAKE_COND_JUMP(JMP, 0, ==)
                     )
 DEF_CMD(JA, 12, 1, 
                     tmp = proc->command[++proc->CurrentCommand];
-                    StackPop(&proc->stk, &tmp1);
+                    StackPop(&proc->UserStack, &tmp1);
                     MAKE_COND_JUMP(JA, tmp1, >)
                     )
 DEF_CMD(JAE, 13, 1, 
                     tmp = proc->command[++proc->CurrentCommand];
-                    StackPop(&proc->stk, &tmp1);
+                    StackPop(&proc->UserStack, &tmp1);
                     MAKE_COND_JUMP(JAE, tmp1, >=)
                     )
 DEF_CMD(JB, 14, 1, 
                     tmp = proc->command[++proc->CurrentCommand];
-                    StackPop(&proc->stk, &tmp1);
+                    StackPop(&proc->UserStack, &tmp1);
                     MAKE_COND_JUMP(JB, tmp1, <)
                     )
 DEF_CMD(JBE, 15, 1, 
                     tmp = proc->command[++proc->CurrentCommand];
-                    StackPop(&proc->stk, &tmp1);
+                    StackPop(&proc->UserStack, &tmp1);
                     MAKE_COND_JUMP(JBE, tmp1, <=)
                     )
 DEF_CMD(JE, 16, 1, 
                     tmp = proc->command[++proc->CurrentCommand];
-                    StackPop(&proc->stk, &tmp1);
+                    StackPop(&proc->UserStack, &tmp1);
                     MAKE_COND_JUMP(JE, tmp1, ==)
                     )
 
 DEF_CMD(JNE, 17, 1, 
                     tmp = proc->command[++proc->CurrentCommand];
-                    StackPop(&proc->stk, &tmp1);
+                    StackPop(&proc->UserStack, &tmp1);
                     MAKE_COND_JUMP(JNE, tmp1, !=)
                     )
 DEF_CMD(CALL, 18, 1,
                     tmp = proc->command[++proc->CurrentCommand];
-                    StackPush(&proc->SourceAddress, proc->CurrentCommand + 1);
+                    StackPush(&proc->CallStack, proc->CurrentCommand + 1);
                     jump(proc, tmp);
                     )
 DEF_CMD(RET, 19, 0,
-                    StackPop(&proc->SourceAddress, &tmp);
+                    StackPop(&proc->CallStack, &tmp);
                     jump(proc, tmp);)
 
 #include "DslUndef.h"
