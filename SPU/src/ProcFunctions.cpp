@@ -27,10 +27,10 @@ void SPUCtor(SPU_t* proc, const char* PathToCm) {
     fread(&BinHeader, sizeof(BinHeader), 1, PtrToCM);
 
     if (BinHeader.signature != signature) {
-        printf(RED "Wrong signature! Your signature: %d\n", BinHeader.signature);
+        printf(RED "Wrong signature! Your signature: %d\n" WHITE, BinHeader.signature);
         abort();
     } else if (BinHeader.version != version) {
-        printf(RED "Wrong version! %d\n", BinHeader.version);
+        printf(RED "Wrong version! %d\n" WHITE, BinHeader.version);
         abort();
     }
     #if defined(SHM)
@@ -236,7 +236,6 @@ int VirtualMachine(SPU_t* proc) {
     }
     
     while(true) {
-        SPU_DUMP(proc);
         switch (proc->command[proc->CurrentCommand] & BITCOMM) {
         #include "dsl.h"
             default:
