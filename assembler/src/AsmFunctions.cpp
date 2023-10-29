@@ -65,7 +65,6 @@ int Comparator(String* PtrToStr, size_t NumbOfLines, int* command, label_t* labe
     
     for (size_t counter = 0; counter < NumbOfLines; counter++) {
         counter = InputStrCommand(PtrToStr, StrCommand, counter);
-        
         #include "dsl.h"
         /*else*/ {
             MyAssert(command[counter] == __INT_MAX__ && "Syntax error!", StrArgument);
@@ -112,12 +111,12 @@ int MakePtrToRAM(int* command, char* left, char* right, const int NumbOfComs) {
     int tmp = 0;
 
     if (CheckOfDigit(left, size)) {
-        command[NumbOfComs - 1] += RAMIdentif;
+        command[NumbOfComs - 1] += RamIdentif;
         command[NumbOfComs] = strtod(left, &right);
-        return RAMIdentif;
+        return RamIdentif;
     } else if ((tmp = MakeRegister(command, left, NumbOfComs)) == regis) {
-        command[NumbOfComs - 1] += RAMIdentif;
-        return RAMIdentif + immed;
+        command[NumbOfComs - 1] += RamIdentif;
+        return RamIdentif + immed;
     } else if (tmp == REG_ERR) {
         MyAssert(0 && "You entered wrong register", left);
         return REG_ERR;
@@ -149,10 +148,11 @@ int MakeRegister(int* command, const char* StrArgument, const int NumbOfComs) {
 }
 
 int InputStrCommand(String* Ptr2Str, char* StrCommand, size_t counter) {
-    sscanf(Ptr2Str[counter].str, "%s", StrCommand);
-        if (StrCommand[0] == '\0') {
-            sscanf(Ptr2Str[++counter].str, "%s", StrCommand);
-        }
+    if (Ptr2Str[counter].str[0] == '\0') {
+        sscanf(Ptr2Str[++counter].str, "%s", StrCommand);
+    } else {
+        sscanf(Ptr2Str[counter].str, "%s", StrCommand);
+    }
     return counter;
 }
 

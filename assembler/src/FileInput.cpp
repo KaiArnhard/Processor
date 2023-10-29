@@ -32,23 +32,24 @@ char *ReadFileToBuffer(const char *FileName, Lengths *Length)
 void InputPtrToBuffer (String *PtrToLine, Lengths *Length, char *Buffer) {
     size_t counter  = 0;
     size_t counter1 = 0;
+    char* tmp = nullptr;
 
     for (; counter < Length->LengthOfBuffer && counter1 < Length->NumberOfLines; counter++) {
         if (Buffer[counter - 1] == '\0') {
             PtrToLine[counter1].str = Buffer + counter;
             PtrToLine[counter1].LengthOfStr = strlen(PtrToLine[counter1].str);
-            if (PtrToLine[counter1].LengthOfStr > SizeOf1Command) {
+            
+            if ((tmp = strchr(PtrToLine[counter1].str, ';')) != nullptr) {
+                *tmp = '\0';
+                counter++;  
+            } else if (strchr(PtrToLine[counter1].str, ':')) {
+
+            } else if (PtrToLine[counter1].LengthOfStr > SizeOf1Command) {
                 Length->NumberOfCommands += 2;
             } else {
                 Length->NumberOfCommands++;
             }
             counter1++;
-        }
-    }
-    for (size_t count = 0; count < counter1; count++) {
-        char* tmp = strchr(PtrToLine[count].str, ';');
-        if (tmp != nullptr) {
-            tmp[0] = '\0';    
         }
     }
     Length->NumberOfLines = counter1;

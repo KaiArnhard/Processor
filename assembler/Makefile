@@ -20,4 +20,4 @@ $(OBJ)/%.o: %
 	$(CXX) -o $@ -c $<
 
 clean:
-	rm -rf $(OBJ)/*.o proc
+	rm -rf $(OBJ)/$(OBJECTS) proc

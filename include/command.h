@@ -32,7 +32,7 @@ static int Error = 0;
 static const size_t signature = *((int*) "KLEO");
 static const size_t version   = 4;
 
-static const size_t RAMIdentif = 1 << 5; //32
+static const size_t RamIdentif = 1 << 5; //32
 static const size_t immed      = 1 << 6; //64
 static const size_t regis      = 1 << 7; //128
 

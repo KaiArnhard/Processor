@@ -2,52 +2,52 @@
 #include "ProcFunctions.h"
 #include "command.h"
 
-void SPUCtor(SPU_t* proc, stack_t UserStack, stack_t CallStack, elem_t* commands, size_t NumbOfComms) {
+void SPUCtor(SPU_t* proc, stack_t userStack, stack_t callStack, elem_t* commands, size_t numbOfComms) {
     *proc = {
-        .Register       = {0},
-        .RAM            = {0},
-        .UserStack      = UserStack,
-        .CallStack      = CallStack,
-        .NumbOfComs     = NumbOfComms,
-        .CurrentCommand = 0,
+        .regis         = {0},
+        .ram            = {0},
+        .userStack      = userStack,
+        .callStack      = callStack,
+        .numbOfComs     = numbOfComms,
+        .currentCommand = 0,
         .command        = commands,
     };
 }
 
-void SPUCtor(SPU_t* proc, const char* PathToCm) {
-    FILE* PtrToCM = fopen(PathToCm, "rb");
-    assert(PtrToCM != nullptr && "You entered not a file");
-    
+void SPUCtor(SPU_t* proc, elem_t* commands, size_t numbOfComms) {
+    stack_t UserStack;
+    STACK_CTOR(&UserStack);
+    stack_t CallStack;
+    STACK_CTOR(&CallStack);
+    SPUCtor(proc, UserStack, CallStack, commands, numbOfComms);
+}
+
+void SPUCtor(SPU_t* proc, FILE* ptrToCm) {
     struct {
         size_t signature;
         size_t version;
         size_t NumbOfComms;
-    } BinHeader;
+    } binHeader;
     
-    fread(&BinHeader, sizeof(BinHeader), 1, PtrToCM);
+    fread(&binHeader, sizeof(binHeader), 1, ptrToCm);
 
-    if (BinHeader.signature != signature) {
-        printf(RED "Wrong signature! Your signature: %d\n" WHITE, BinHeader.signature);
+    if (binHeader.signature != signature) {
+        printf(RED "Wrong signature! Your signature: %d\n" WHITE, binHeader.signature);
         abort();
-    } else if (BinHeader.version != version) {
-        printf(RED "Wrong version! %d\n" WHITE, BinHeader.version);
+    } else if (binHeader.version != version) {
+        printf(RED "Wrong version! %d\n" WHITE, binHeader.version);
         abort();
     }
     #if defined(SHM)
         proc->command = SPUShmCtor();
     #else
-        elem_t* commands = (elem_t*) calloc(BinHeader.NumbOfComms, sizeof(elem_t));
-        fread(commands, sizeof(*commands), BinHeader.NumbOfComms, PtrToCM);
+        elem_t* commands = (elem_t*) calloc(binHeader.NumbOfComms, sizeof(elem_t));
+        fread(commands, sizeof(*commands), binHeader.NumbOfComms, ptrToCm);
     #endif // SHM
     
-    fclose(PtrToCM);
+    fclose(ptrToCm);
 
-    stack_t UserStack;
-    STACK_CTOR(&UserStack);
-    stack_t CallStack;
-    STACK_CTOR(&CallStack);
-
-    SPUCtor(proc, UserStack, CallStack, commands, BinHeader.NumbOfComms);
+    SPUCtor(proc, commands, binHeader.NumbOfComms);
     
 }
 
@@ -65,58 +65,58 @@ void SPUCtor(SPU_t* proc, const char* PathToCm) {
 
 
 void SPUDtor(SPU_t* proc) {
-    for (size_t counter = 0; counter < NumbOfRegs; counter++) {
-        proc->Register[counter] = POISON;
+    for (size_t counter = 0; counter < numbOfRegs; counter++) {
+        proc->regis[counter] = POISON;
     }
-    for (size_t counter = 0; counter < proc->NumbOfComs; counter++) {
+    for (size_t counter = 0; counter < proc->numbOfComs; counter++) {
         proc->command[counter] = POISON;
     }
-    proc->NumbOfComs = POISON;
+    proc->numbOfComs = POISON;
     #if defined(SHM)
         shmdt(proc->command);
     #else
         free(proc->command);
     #endif // SHM
     
-    StackDtor(&proc->UserStack);
-    StackDtor(&proc->CallStack);
+    StackDtor(&proc->userStack);
+    StackDtor(&proc->callStack);
 
     proc->command = nullptr;
     proc = nullptr;
-    fclose(PointerToDump);
+    fclose(pointerToDump);
 }
 
 void SPUDump(SPU_t* proc, const char* file, const char* function, size_t line) {
-    PointerToDump = StackDump(&proc->UserStack, file, function, line);
+    pointerToDump = StackDump(&proc->userStack, file, function, line);
     
-    fprintf(PointerToDump, "\nAll registers \n");
-    for (size_t counter = 0; counter < NumbOfRegs; counter++) {
-        fprintf(PointerToDump, "%d\t", proc->Register[counter]);
+    fprintf(pointerToDump, "\nAll registers \n");
+    for (size_t counter = 0; counter < numbOfRegs; counter++) {
+        fprintf(pointerToDump, "%d\t", proc->regis[counter]);
     }
-    fprintf(PointerToDump, "\n\n");
-    fprintf(PointerToDump, "Number of commands %d\n\n", proc->NumbOfComs);
-    fprintf(PointerToDump, "All commands\n");
+    fprintf(pointerToDump, "\n\n");
+    fprintf(pointerToDump, "Number of commands %d\n\n", proc->numbOfComs);
+    fprintf(pointerToDump, "All commands\n");
 
-    for (size_t counter = 0; counter < proc->NumbOfComs; counter++) {
-        fprintf(PointerToDump, "%.2d ", counter);
+    for (size_t counter = 0; counter < proc->numbOfComs; counter++) {
+        fprintf(pointerToDump, "%.2d ", counter);
     }
-    fprintf(PointerToDump, "\n");
+    fprintf(pointerToDump, "\n");
     
-    for (size_t counter = 0; counter < proc->NumbOfComs; counter++) {
-        if (counter == proc->CurrentCommand) {
-            fprintf(PointerToDump, "[%.2d] ", proc->command[counter]);
+    for (size_t counter = 0; counter < proc->numbOfComs; counter++) {
+        if (counter == proc->currentCommand) {
+            fprintf(pointerToDump, "[%.2d] ", proc->command[counter]);
         } else {
-            fprintf(PointerToDump, "%.2d ", proc->command[counter]);
+            fprintf(pointerToDump, "%.2d ", proc->command[counter]);
         }
     }
-    fprintf(PointerToDump, "\n\nCurent command %d\n\n", proc->CurrentCommand);
-    fprintf(PointerToDump, "\n");
+    fprintf(pointerToDump, "\n\nCurent command %d\n\n", proc->currentCommand);
+    fprintf(pointerToDump, "\n");
 }
 
-void PrintfOfRAM(SPU_t* proc) {
-    for (size_t counter = 0; counter < SizeOfRAM; counter += 10) {
+void PrintOfRam(SPU_t* proc) {
+    for (size_t counter = 0; counter < sizeOfRam; counter += 10) {
         for (size_t counter1 = counter; counter1 < 10 + counter; counter1++) {
-            if (proc->RAM[counter1] != 0) {
+            if (proc->ram[counter1] != 0) {
                 printf("*");
             } else {
                 printf(".");
@@ -124,88 +124,98 @@ void PrintfOfRAM(SPU_t* proc) {
         }
         printf("\n");
     }
+    printf("programm is paused, press enter to continue\n");
+    getchar();
     system("clear");
     sleep(0.5);
 }
 
-elem_t add(stack_t *UserStack) {
+elem_t Add(stack_t *userStack) {
     elem_t tmp1 = 0;
     elem_t tmp2 = 0;
 
-    StackPop(UserStack, &tmp1);
-    StackPop(UserStack, &tmp2);
-    StackPush(UserStack, (tmp1 + tmp2));
+    StackPop(userStack, &tmp1);
+    StackPop(userStack, &tmp2);
+    StackPush(userStack, (tmp1 + tmp2));
 
     return (tmp1 + tmp2);
 }
 
-elem_t sub(stack_t* UserStack) {
+elem_t Sub(stack_t* userStack) {
     elem_t deduct =  0;
     elem_t redused = 0;
 
-    StackPop(UserStack, &deduct);
-    StackPop(UserStack, &redused);
-    StackPush(UserStack, (redused - deduct));
+    StackPop(userStack, &deduct);
+    StackPop(userStack, &redused);
+    StackPush(userStack, (redused - deduct));
 
     return (redused - deduct);
 }
 
-elem_t div(stack_t* UserStack) {
+elem_t Div(stack_t* userStack) {
     elem_t divider   = 0;
     elem_t divisible = 0;
 
-    StackPop(UserStack, &divider);
-    StackPop(UserStack, &divisible);
-    StackPush(UserStack, (divisible * SIGNS / divider));
+    StackPop(userStack, &divider);
+    StackPop(userStack, &divisible);
+    StackPush(userStack, (divisible * SIGNS / divider));
 
     return (divisible * SIGNS) / divider;
 }
 
-elem_t mul(stack_t* UserStack) {
+elem_t Mul(stack_t* userStack) {
     elem_t tmp1 = 0;
     elem_t tmp2 = 0;
 
-    StackPop(UserStack, &tmp1);
-    StackPop(UserStack, &tmp2);
-    StackPush(UserStack, tmp1 * tmp2 / SIGNS);
+    StackPop(userStack, &tmp1);
+    StackPop(userStack, &tmp2);
+    StackPush(userStack, tmp1 * tmp2 / SIGNS);
 
     return tmp1 * tmp2;
 }
 
-elem_t proc_sqrt(stack_t* UserStack) {
+elem_t ProcSqrt(stack_t* userStack) {
     elem_t tmp = 0;
-    StackPop(UserStack, &tmp);
+    StackPop(userStack, &tmp);
     double tmp1 = sqrt(tmp * SIGNS);
     tmp = tmp1;
-    StackPush(UserStack, tmp);
+    StackPush(userStack, tmp);
     return tmp;
 }
 
-elem_t proc_sin(stack_t* UserStack) {
+elem_t ProcSin(stack_t* userStack) {
     elem_t tmp = 0;
-    StackPop(UserStack, &tmp);
+    StackPop(userStack, &tmp);
     double tmp1 = sin(tmp / SIGNS) * SIGNS;
     tmp = tmp1;
-    StackPush(UserStack, tmp);
+    StackPush(userStack, tmp);
     return tmp;
 }
 
-elem_t proc_cos(stack_t* UserStack) {
+elem_t ProcCos(stack_t* userStack) {
     elem_t tmp = 0;
-    StackPop(UserStack, &tmp);
+    StackPop(userStack, &tmp);
     double tmp1 = cos(tmp / SIGNS) * SIGNS;
     tmp = tmp1;
-    StackPush(UserStack, tmp);
+    StackPush(userStack, tmp);
     return tmp;
 }
 
-elem_t in(stack_t *UserStack) {
+elem_t In(stack_t *userStack) {
     elem_t tmp = 0;
-    scanf("%d", &tmp);
-    return tmp;
+    char symbol  = 0;
+
+    printf("Enter number from keyboard\n");
+    while (scanf("%d", &tmp) != 1) {
+        printf("You entered not a number, try again\n");
+        while ((symbol = getchar()) != EOF && symbol != '\n') { }
+    }
+    tmp *= SIGNS;
+    StackPush(userStack, tmp);
+    return tmp;    
 }
 
-elem_t out(stack_t* UserStack) {
+elem_t Out(stack_t* UserStack) {
     elem_t tmp = 0;
     StackPop(UserStack, &tmp);
     
@@ -214,9 +224,9 @@ elem_t out(stack_t* UserStack) {
     return tmp;
 }
 
-size_t jump(SPU_t* proc, size_t DestAddress) {
-    proc->CurrentCommand = DestAddress - 1;
-    return proc->CurrentCommand;
+size_t Jump(SPU_t* proc, size_t destAddress) {
+    proc->currentCommand = destAddress - 1;
+    return proc->currentCommand;
 }
 
 int VirtualMachine(SPU_t* proc) {
@@ -229,21 +239,20 @@ int VirtualMachine(SPU_t* proc) {
 
     int tmp      = 0;
     int tmp1     = 0;
-    char symbol  = 0;
 
-    for (size_t i = 0; i < proc->NumbOfComs; i++) {
+    for (size_t i = 0; i < proc->numbOfComs; i++) {
         printf("%d\n", proc->command[i]);
     }
     
     while(true) {
-        switch (proc->command[proc->CurrentCommand] & BITCOMM) {
+        switch (proc->command[proc->currentCommand] & BITCOMM) {
         #include "dsl.h"
             default:
-                MyAssert(1 && "SYNTAX ERROR!", (char*) &(proc->command[proc->CurrentCommand]));
+                MyAssert(0 && "SYNTAX ERROR!", (char*) &(proc->command[proc->currentCommand]));
                 Error = -1;
             break;
         }
-        proc->CurrentCommand++;
+        proc->currentCommand++;
     }
     return 0;
 }

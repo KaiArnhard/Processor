@@ -6,7 +6,7 @@
 typedef unsigned long long canary_t;
 typedef unsigned long long hash_t;
 
-static FILE* PointerToDump = fopen("../ProcDump.txt", "w");
+static FILE* pointerToDump = fopen("../ProcDump.txt", "w");
 
 enum Errors_t {
     STACK_NO_ERRORS                        = 0,
@@ -54,7 +54,7 @@ static size_t MyErrorno = STACK_NO_ERRORS;
 #define PTR_STACK_CHECK(condition)                                                                                                                                  \
 if(!condition) {                                                                                                                                                    \
     MyErrorno |= STACK_ERROR_PTR_TO_STK_ZERO;                                                                                                                       \
-    fprintf(PointerToDump, "Ptr %p, Error number %d, occurs in FILE %s, on line %d, function %s\n", condition, MyErrorno, __FILE__, __LINE__, __PRETTY_FUNCTION__); \
+    fprintf(pointerToDump, "Ptr %p, Error number %d, occurs in FILE %s, on line %d, function %s\n", condition, MyErrorno, __FILE__, __LINE__, __PRETTY_FUNCTION__); \
     exit(-1);                                                                                                                                                       \
 }
 

@@ -3,7 +3,7 @@
 
 #include "types.h"
 
-struct LabelInf {
+struct labelInf {
     char LabelName[100];
     int  DestAddres;
 };
@@ -11,11 +11,11 @@ struct LabelInf {
 struct label_t {
     size_t counter;
     size_t size;
-    LabelInf* inform;
+    labelInf* inform;
 };
 
-LabelInf* CtorLabel (label_t* label);
-LabelInf* ResizeLabel(label_t* label);
+labelInf* CtorLabel (label_t* label);
+labelInf* ResizeLabel(label_t* label);
 
 int LabelCheck(const char* NameOfLabel, label_t* label);
 int MakeLabel(label_t* label, char* NameOfLabel, size_t NumbOfComs);

@@ -1,8 +1,8 @@
 #include "AsmFunctions.h"
 #include "types.h"
 
-LabelInf* CtorLabel(label_t* label) {
-    label->inform = (LabelInf*) calloc(DefaultLabelSize, sizeof(LabelInf));
+labelInf* CtorLabel(label_t* label) {
+    label->inform = (labelInf*) calloc(DefaultLabelSize, sizeof(labelInf));
     label->size = DefaultLabelSize;
     label->counter = 0;
     assert(label->inform != nullptr && "Pointer to array of labels is null");
@@ -12,9 +12,9 @@ LabelInf* CtorLabel(label_t* label) {
     return label->inform;
 }
 
-LabelInf* ResizeLabel(label_t* label) {
+labelInf* ResizeLabel(label_t* label) {
     label->size *= ResizeLabelConst; 
-    label->inform = (LabelInf*) realloc(label->inform, sizeof(LabelInf) * label->size);
+    label->inform = (labelInf*) realloc(label->inform, sizeof(labelInf) * label->size);
     assert(label->inform != nullptr && "Pointer to array of labels is null");
     for (size_t counter = label->size / ResizeLabelConst; counter < label->size; counter++) {
         label->inform[counter].DestAddres = DefaultLabelAdress;

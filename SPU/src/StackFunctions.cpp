@@ -148,25 +148,25 @@ size_t StackResize(stack_t* stk, Resize_t CodeOfResize) {
 
 FILE* StackDump(stack_t* stk, const char* file, const char* function, size_t line) {
     
-    fprintf(PointerToDump, "Stack [%p], %s  from %s line: %d %s \n\n", stk, stk->var.name, stk->var.file, stk->var.line, stk->var.function);
+    fprintf(pointerToDump, "Stack [%p], %s  from %s line: %d %s \n\n", stk, stk->var.name, stk->var.file, stk->var.line, stk->var.function);
 
     #if defined(CANARY_PROT)
 
-        fprintf(PointerToDump, "Left stack canary %llX \n",  stk->LeftCanary);
-        fprintf(PointerToDump, "Right stack canary %llX \n", stk->RightCanary);
+        fprintf(pointerToDump, "Left stack canary %llX \n",  stk->LeftCanary);
+        fprintf(pointerToDump, "Right stack canary %llX \n", stk->RightCanary);
     #endif // CANARY_PROT
     
-    fprintf(PointerToDump, "Called from %s(%d), %s\n", file, line, function);
-    fprintf(PointerToDump, "Error numbers \n");
+    fprintf(pointerToDump, "Called from %s(%d), %s\n", file, line, function);
+    fprintf(pointerToDump, "Error numbers \n");
     size_t Error[11] = {};
     ErrorDecoder(Error);
     
     #if defined(HASH_PROT)
-        fprintf(PointerToDump, "Stack hash %lld\n", stk->hash);
+        fprintf(pointerToDump, "Stack hash %lld\n", stk->hash);
     #endif // HASH_PROT
 
-    fprintf(PointerToDump, "size = %d, capacity = %d \n", stk->size, stk->capacity);
-    fprintf(PointerToDump, "data [%p] \n", stk->data);
+    fprintf(pointerToDump, "size = %d, capacity = %d \n", stk->size, stk->capacity);
+    fprintf(pointerToDump, "data [%p] \n", stk->data);
 
     if (Error[1] || Error[3] || Error[4]) {
         exit(-1);
@@ -174,14 +174,14 @@ FILE* StackDump(stack_t* stk, const char* file, const char* function, size_t lin
     
     if (!Error[4] && !Error[5]) {
         
-        PrintOfData(stk, PointerToDump);
+        PrintOfData(stk, pointerToDump);
     
     } else if (Error[3]) {
         for (size_t counter = 0; counter < stk->size; counter++) {
-            fprintf(PointerToDump, "[%d] = %d \n", counter, stk->data[counter]);
+            fprintf(pointerToDump, "[%d] = %d \n", counter, stk->data[counter]);
         }
     }
-    return PointerToDump;
+    return pointerToDump;
 }
 
 size_t StackVerify(stack_t* stk) {
@@ -237,73 +237,73 @@ size_t StackVerify(stack_t* stk) {
 void ErrorDecoder(size_t* Error) {
     if (MyErrorno & STACK_ERROR_STACK_OVERFLOW) {                  
         Error[0] = STACK_ERROR_STACK_OVERFLOW;
-        fprintf(PointerToDump, "%d ", Error[0]);
+        fprintf(pointerToDump, "%d ", Error[0]);
     
     } if (MyErrorno & STACK_ERROR_PTR_TO_DATA_ZERO) {
         Error[1] = STACK_ERROR_PTR_TO_DATA_ZERO;
-        fprintf(PointerToDump, "%d ", Error[1]);
+        fprintf(pointerToDump, "%d ", Error[1]);
     
     } if (MyErrorno & STACK_ERROR_SIZE_OVER_CAPACITY) {
         Error[2] = STACK_ERROR_SIZE_OVER_CAPACITY;
-        fprintf(PointerToDump, "%d ", Error[2]);
+        fprintf(pointerToDump, "%d ", Error[2]);
     
     } if (MyErrorno & STACK_ERROR_SIZE_LOWER_ZERO) {
         Error[3] = STACK_ERROR_SIZE_LOWER_ZERO;
-        fprintf(PointerToDump, "%d ", Error[3]);
+        fprintf(pointerToDump, "%d ", Error[3]);
     
     } if (MyErrorno & STACK_ERROR_CAPACITY_LOWER_ZERO) {
         Error[4] = STACK_ERROR_CAPACITY_LOWER_ZERO;
-        fprintf(PointerToDump, "%d ", Error[4]); 
+        fprintf(pointerToDump, "%d ", Error[4]); 
     
     } if (MyErrorno & STACK_ERROR_CAPACITY_EQUAL_ZERO) {
         Error[5] = STACK_ERROR_CAPACITY_EQUAL_ZERO;
-        fprintf(PointerToDump, "%d ", Error[5]);
+        fprintf(pointerToDump, "%d ", Error[5]);
     
     } if (MyErrorno & STACK_ERROR_CAPACITY_LOWER_DEFAULT) {
         Error[6] = STACK_ERROR_CAPACITY_LOWER_DEFAULT;
-        fprintf(PointerToDump, "%d ", Error[6]);
+        fprintf(pointerToDump, "%d ", Error[6]);
     }
 
     #if defined(CANARY_PROT)
     
         if (MyErrorno & STACK_ERROR_LEFT_CANARY_DIED) {
             Error[7] = STACK_ERROR_LEFT_CANARY_DIED;
-            fprintf(PointerToDump, "%d ", Error[7]);
+            fprintf(pointerToDump, "%d ", Error[7]);
         } if (MyErrorno & STACK_ERROR_RIGHT_CANARY_DIED) {
             Error[8] = STACK_ERROR_RIGHT_CANARY_DIED;
-            fprintf(PointerToDump, "%d ", Error[8]);
+            fprintf(pointerToDump, "%d ", Error[8]);
         } if (MyErrorno & STACK_ERROR_DATA_LEFT_CANARY_DIED) {
             Error[9] = STACK_ERROR_DATA_LEFT_CANARY_DIED;
-            fprintf(PointerToDump, "%d ", Error[9]);
+            fprintf(pointerToDump, "%d ", Error[9]);
         } if (MyErrorno & STACK_ERROR_DATA_RIGHT_CANARY_DIED) {
             Error[10] = STACK_ERROR_DATA_RIGHT_CANARY_DIED;
-            fprintf(PointerToDump, "%d ", Error[10]);
+            fprintf(pointerToDump, "%d ", Error[10]);
         }
     #endif // CANARY_PROT
 
     #if defined(HASH_PROT)
         if (MyErrorno & STACK_ERROR_WRONG_HASH) {
             Error[11] = STACK_ERROR_WRONG_HASH;
-            fprintf(PointerToDump, "%d ", Error[11]);
+            fprintf(pointerToDump, "%d ", Error[11]);
         }
         
     #endif // HASH_PROT
     
-    fprintf(PointerToDump, "\n");    
+    fprintf(pointerToDump, "\n");    
 
 }
 
 void PrintOfData(stack_t* stk, FILE* fp) {
     #if defined(CANARY_PROT)
     
-        fprintf(PointerToDump, "Left data canary %llX\n", ((canary_t*)stk->data)[-1]);
-        fprintf(PointerToDump, "Right data canary %llX\n", ((canary_t*)(stk->data + stk->capacity))[0]);
+        fprintf(pointerToDump, "Left data canary %llX\n", ((canary_t*)stk->data)[-1]);
+        fprintf(pointerToDump, "Right data canary %llX\n", ((canary_t*)(stk->data + stk->capacity))[0]);
     
     #endif // CANARY_PROT
     
     size_t counter = 0;
         for (; counter < stk->size && counter < stk->capacity; counter++) {
-            fprintf(PointerToDump, "[%d] = %d \n", counter, stk->data[counter]);
+            fprintf(pointerToDump, "[%d] = %d \n", counter, stk->data[counter]);
         }
     for (; counter < stk->capacity; counter++) {
         fprintf(fp, "[%d] = ", counter);
