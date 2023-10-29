@@ -13,7 +13,7 @@ run: asm
 	./asm $(ARGS)
 
 asm: $(OBJECTS)
-	$(CXX) -o $@ $(CFLAGS) $(OBJECTS)
+	$(CXX) -o $@ $(OBJECTS)
 
 $(OBJ)/%.o: %
 	mkdir -p $(dir $@)
