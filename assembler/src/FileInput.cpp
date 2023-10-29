@@ -14,11 +14,11 @@ char *ReadFileToBuffer(const char *FileName, Lengths *Length)
     assert(fp != 0);
     assert(fread(Buffer, sizeof(char), statistic.st_size, fp) != 0);
     fclose(fp);
-    
+
     for (size_t counter = 0; counter < Length->LengthOfBuffer; counter++) {
         Buffer[counter] = toupper(Buffer[counter]);
     }
-
+    Buffer[Length->LengthOfBuffer] = '\0';
     Length->NumberOfLines++;
     for (size_t counter = 0; (counter + 1) < Length->LengthOfBuffer; counter++) {
         if (Buffer[counter] == '\n') {
@@ -38,12 +38,11 @@ void InputPtrToBuffer (String *PtrToLine, Lengths *Length, char *Buffer) {
         if (Buffer[counter - 1] == '\0') {
             PtrToLine[counter1].str = Buffer + counter;
             PtrToLine[counter1].LengthOfStr = strlen(PtrToLine[counter1].str);
-            
+            printf("%s\n", PtrToLine[counter1].str);
             if ((tmp = strchr(PtrToLine[counter1].str, ';')) != nullptr) {
-                *tmp = '\0';
-                counter++;  
+                *tmp = '\0';  
             } else if (strchr(PtrToLine[counter1].str, ':')) {
-
+                printf("dbg\n");
             } else if (PtrToLine[counter1].LengthOfStr > SizeOf1Command) {
                 Length->NumberOfCommands += 2;
             } else {
