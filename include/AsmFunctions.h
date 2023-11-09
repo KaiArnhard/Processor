@@ -18,7 +18,7 @@ static const size_t DefaultLabelSize  =  10;
 static const int DefaultLabelAdress   = -1;
 
 int RunAssembler(const char* PathToCm, const char* PathToAsm);
-int Comparator(String* PtrToStr, size_t NumbOfLines, int* commands, label_t* label);
+void Comparator(String* PtrToStr, Lengths* length, int* command, label_t* label);
 
 int InputStrCommand(String* Ptr2Str, char* StrCommand, size_t counter);
 
