@@ -4,7 +4,7 @@
 
 void SPUCtor(SPU_t* proc, stack_t userStack, stack_t callStack, elem_t* commands, size_t numbOfComms) {
     *proc = {
-        .regis         = {0},
+        .regis          = {0},
         .ram            = {0},
         .userStack      = userStack,
         .callStack      = callStack,
