@@ -18,17 +18,16 @@ int RunAssembler(const char* PathToCm, const char* PathToAsm) {
     #else
         int* command = (int*) calloc(length.NumberOfCommands, sizeof(int));
     #endif // SHM
+    label_t label = {};
 
-    label_t label;
-    label.inform = nullptr;
-    label.inform = CtorLabel(&label);
+    CtorLabel(&label);
 
-    length.NumberOfCommands = Comparator(Ptr2Str, length.NumberOfLines, command, &label);
-
+    Comparator(Ptr2Str, &length, command, &label);
+    
     for (size_t counter = 0; counter < length.NumberOfCommands; counter++) {
         int BitForm = command[counter] & BITCOMM;
         if (JUMP && BitForm == CMD_CALL && command[counter + 1] == DefaultLabelAdress) {
-            length.NumberOfCommands = Comparator(Ptr2Str, length.NumberOfLines, command, &label);
+            Comparator(Ptr2Str, &length, command, &label);
             break;
         }   
     }
@@ -38,7 +37,7 @@ int RunAssembler(const char* PathToCm, const char* PathToAsm) {
     return 0;
 }
 
-int Comparator(String* PtrToStr, size_t NumbOfLines, int* command, label_t* label) {
+void Comparator(String* PtrToStr, Lengths* length, int* command, label_t* label) {
 
     #define DEF_CMD(name, numb, arg, ...)                                                           \
         if (!strcmp(StrCommand, #name)) {                                                           \
@@ -57,13 +56,13 @@ int Comparator(String* PtrToStr, size_t NumbOfLines, int* command, label_t* labe
             label->counter = MakeLabel(label, StrCommand, NumbOfComs);                              \
         } else
         
-    char StrCommand[StrCommandSize]  = {};
-    char StrArgument[StrArgSize] = {};
+    char StrCommand[StrCommandSize] = {};
+    char StrArgument[StrArgSize]    = {};
 
     size_t NumbOfComs   = 0;
     int verify          = 0;                                             
     
-    for (size_t counter = 0; counter < NumbOfLines; counter++) {
+    for (size_t counter = 0; counter < length->NumberOfLines && NumbOfComs < length->NumberOfCommands; counter++) {
         counter = InputStrCommand(PtrToStr, StrCommand, counter);
         #include "dsl.h"
         /*else*/ {
@@ -75,7 +74,6 @@ int Comparator(String* PtrToStr, size_t NumbOfLines, int* command, label_t* labe
         }   
     }
     PrintOfLabels(label);
-    return NumbOfComs;
 }
 
 #if defined(SHM)
@@ -157,15 +155,25 @@ int InputStrCommand(String* Ptr2Str, char* StrCommand, size_t counter) {
 }
 
 void InputCommsToFile(const label_t* label, const int* command, const char* PathToCm, const size_t NumbOfComs) {
-    FILE* CommandFile = fopen(PathToCm, "wb");
-    assert(CommandFile != nullptr);
+    FILE* CommandsFile = fopen(PathToCm, "wb");
+    assert(CommandsFile != nullptr);
+    
+    struct {
+        size_t signature;
+        size_t version;
+        size_t length;
+    } binHeader;
+    
+    binHeader = {
+        .signature = signature,
+        .version   = version,
+        .length    = NumbOfComs
+    };
 
-    size_t tmp[3] = {signature, version, NumbOfComs};
-
-    fwrite(tmp, sizeof(size_t), sizeof(tmp) / sizeof(size_t), CommandFile);
-    fwrite(command, sizeof(int), NumbOfComs, CommandFile);
+    fwrite(&binHeader, sizeof(binHeader), 1, CommandsFile);
+    fwrite(command, sizeof(int), NumbOfComs, CommandsFile);
              
-    fclose(CommandFile);
+    fclose(CommandsFile);
     PrintOfCommsFile(label, PathToCm, NumbOfComs);
 }
 
@@ -173,25 +181,30 @@ void PrintOfCommsFile(const label_t* label, const char* PathToCm, const size_t N
     FILE* CommandFile = fopen(PathToCm, "rb");
     assert(CommandFile != nullptr);
 
-    int command[NumbOfComs];
-    size_t tmp[3] = {};
-    
-    fread(tmp, sizeof(size_t), sizeof(tmp) / sizeof(size_t), CommandFile);
-    fread(command, sizeof(int), NumbOfComs, CommandFile);
+    int commands[NumbOfComs];
+
+    struct {
+        size_t signature;
+        size_t version;
+        size_t length;
+    } binHeader;
+
+    fread(&binHeader, sizeof(binHeader), 1, CommandFile);
+    fread(commands, sizeof(int), NumbOfComs, CommandFile);
     fclose(CommandFile);
 
-    for (size_t counter = 0; counter < sizeof(tmp) / sizeof(size_t); counter++) {
-        printf("%d\t", tmp[counter]);
-    }
-    printf("\n");
+    printf("\nSignature: %lu\n", binHeader.signature);
+    printf("Version %lu\n", binHeader.version);
+    printf("Number of commands %lu\n\n", binHeader.length);
+
     for (size_t counter = 0; counter < NumbOfComs; counter++) {
-        int BitForm = command[counter] & BITCOMM;
+        int BitForm = commands[counter] & BITCOMM;
         if (BitForm == CMD_PUSH || BitForm == CMD_POP || JUMP || BitForm == CMD_CALL) {
-            printf("%d  %d\n", command[counter], command[counter + 1]);
+            printf("%d  %d\n", commands[counter], commands[counter + 1]);
             counter++;
         }
         else {
-            printf("%d\n", command[counter]);
+            printf("%d\n", commands[counter]);
         }
     }
     printf("\n");
@@ -204,8 +217,12 @@ void Destructor(label_t* label, int* command, String* PtrToStr) {
     #else
         free(command);
     #endif // SHM
-    free(PtrToStr);
+    for (size_t counter = 0; counter < label->size; counter++) {
+        label->inform[counter].DestAddres = DefaultLabelAdress;
+    }
+
     free(label->inform);
+    free(PtrToStr);
 }
 
 int disassembly(const char* DisAsmName, const char* CmName) {
