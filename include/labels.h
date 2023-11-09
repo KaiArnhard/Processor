@@ -3,8 +3,10 @@
 
 #include "types.h"
 
+static const size_t labelNameSize = 100;
+
 struct labelInf {
-    char LabelName[100];
+    char LabelName[labelNameSize];
     int  DestAddres;
 };
 
